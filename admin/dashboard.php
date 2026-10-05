@@ -56,8 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ip = trim($_POST['ip_address'] ?? '');
             $label = trim($_POST['label'] ?? 'Admin Manual Whitelist');
             if (!empty($ip) && $pdo) {
-                $stmt = $pdo->prepare("INSERT IGNORE INTO ip_whitelists (ip_address, label, is_auto) VALUES (:ip, :l, 0)");
-                $stmt->execute(['ip' => $ip, 'l' => $label]);
+                try {
+                    $stmt = $pdo->prepare("INSERT INTO ip_whitelists (ip_address, label, is_auto) VALUES (:ip, :l, 0)");
+                    $stmt->execute(['ip' => $ip, 'l' => $label]);
+                } catch (\Exception $e) {
+                    // Ignore duplicate key error
+                }
                 $message = 'IP added to Whitelist!';
                 $messageType = 'success';
             }

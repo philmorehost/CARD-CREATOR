@@ -36,17 +36,8 @@ function get_db_connection() {
         ]);
         return $pdo;
     } catch (\PDOException $e) {
-        // Fallback to SQLite automatically if MySQL connection fails
-        try {
-            $sqlitePath = __DIR__ . '/../card_creator.sqlite';
-            $pdo = new PDO("sqlite:" . $sqlitePath);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            return $pdo;
-        } catch (\PDOException $ex) {
-            error_log("Database connection error: " . $ex->getMessage());
-            return null;
-        }
+        error_log("Database connection error: " . $e->getMessage());
+        return null;
     }
 }
 
@@ -87,7 +78,7 @@ function set_setting($key, $value) {
         return false;
     }
 
-    $stmt = $pdo->prepare("INSERT OR REPLACE INTO settings (setting_key, setting_value) VALUES (:key, :val)");
+    $stmt = $pdo->prepare("REPLACE INTO settings (setting_key, setting_value) VALUES (:key, :val)");
     return $stmt->execute(['key' => $key, 'val' => $value]);
 }
 

@@ -32,28 +32,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } elseif ($action === 'stage2_database') {
+        $dbDriver = trim($_POST['db_driver'] ?? 'mysql');
         $host = trim($_POST['db_host'] ?? '127.0.0.1');
         $port = trim($_POST['db_port'] ?? '3306');
         $dbName = trim($_POST['db_name'] ?? '');
         $user = trim($_POST['db_user'] ?? '');
         $pass = $_POST['db_pass'] ?? '';
 
-        if (empty($dbName) || empty($user)) {
-            $error = 'Database Name and User are required.';
-        } else {
-            try {
+        try {
+            if ($dbDriver === 'mysql') {
+                if (empty($dbName) || empty($user)) {
+                    throw new Exception('Database Name and Username are required for MySQL setup.');
+                }
+
+                // Connect to MySQL server first (without database) to create DB if needed
+                $dsnServer = "mysql:host={$host};port={$port};charset=utf8mb4";
+                $pdoServer = new PDO($dsnServer, $user, $pass, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                ]);
+
+                // Create database if it does not exist
+                $pdoServer->exec("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+                // Connect to the specific database
+                $dsnDb = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
+                $pdo = new PDO($dsnDb, $user, $pass, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                ]);
+
+                // Import Schema for MySQL
+                $schemaFile = __DIR__ . '/../schema.sql';
+                if (file_exists($schemaFile)) {
+                    $sql = file_get_contents($schemaFile);
+                    $sql = str_replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'INT AUTO_INCREMENT PRIMARY KEY', $sql);
+                    $statements = array_filter(array_map('trim', explode(';', $sql)));
+                    foreach ($statements as $stmtSql) {
+                        if (!empty($stmtSql)) {
+                            $pdo->exec($stmtSql);
+                        }
+                    }
+                }
+
+                // Save MySQL database config
+                $configContent = "<?php\nreturn " . var_export([
+                    'driver' => 'mysql',
+                    'host' => $host,
+                    'port' => $port,
+                    'db_name' => $dbName,
+                    'user' => $user,
+                    'pass' => $pass
+                ], true) . ";\n";
+
+                file_put_contents(__DIR__ . '/../config/database.php', $configContent);
+
+            } else {
+                // SQLite engine
                 $dbFile = __DIR__ . '/../card_creator.sqlite';
                 $pdo = new PDO("sqlite:" . $dbFile);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-                // Import Schema
+                // Import Schema for SQLite
                 $schemaFile = __DIR__ . '/../schema.sql';
                 if (file_exists($schemaFile)) {
                     $sql = file_get_contents($schemaFile);
-                    $pdo->exec($sql);
+                    $sql = str_replace('INT AUTO_INCREMENT PRIMARY KEY', 'INTEGER PRIMARY KEY AUTOINCREMENT', $sql);
+                    $statements = array_filter(array_map('trim', explode(';', $sql)));
+                    foreach ($statements as $stmtSql) {
+                        if (!empty($stmtSql)) {
+                            $pdo->exec($stmtSql);
+                        }
+                    }
                 }
 
-                // Save database config
+                // Save SQLite database config
                 $configContent = "<?php\nreturn " . var_export([
                     'driver' => 'sqlite',
                     'db_path' => $dbFile,
@@ -65,12 +117,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ], true) . ";\n";
 
                 file_put_contents(__DIR__ . '/../config/database.php', $configContent);
-
-                header('Location: index.php?stage=3');
-                exit;
-            } catch (\Exception $e) {
-                $error = 'Database Setup Failed: ' . $e->getMessage();
             }
+
+            header('Location: index.php?stage=3');
+            exit;
+        } catch (\Exception $e) {
+            $error = 'Database Setup Failed: ' . $e->getMessage();
         }
     } elseif ($action === 'stage3_admin') {
         $username = trim($_POST['admin_user'] ?? '');
@@ -94,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     // Create Admin Account
                     $passHash = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("INSERT OR REPLACE INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, 'admin')");
+                    $stmt = $pdo->prepare("REPLACE INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, 'admin')");
                     $stmt->execute(['u' => $username, 'e' => $email, 'p' => $passHash]);
 
                     // Seed Settings
@@ -115,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'security_notify_bruteforce' => '1'
                     ];
 
-                    $stmtSetting = $pdo->prepare("INSERT OR REPLACE INTO settings (setting_key, setting_value) VALUES (:k, :v)");
+                    $stmtSetting = $pdo->prepare("REPLACE INTO settings (setting_key, setting_value) VALUES (:k, :v)");
                     foreach ($settingsMap as $k => $v) {
                         $stmtSetting->execute(['k' => $k, 'v' => $v]);
                     }
@@ -289,36 +341,57 @@ $allRequirementsMet = $phpReq && $extPdo && $extCurl && $extGd;
             <input type="hidden" name="action" value="stage2_database">
             <h2 class="text-lg font-semibold text-white">Stage 2: Database Configuration & Schema</h2>
 
-            <div class="grid grid-cols-3 gap-4">
-                <div class="col-span-2">
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Database Host</label>
-                    <input type="text" name="db_host" value="127.0.0.1" required class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Database Engine / Driver</label>
+                <select name="db_driver" id="db_driver" onchange="toggleDbFields()" class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
+                    <option value="mysql" selected>MySQL / MariaDB (Recommended for phpMyAdmin / cPanel)</option>
+                    <option value="sqlite">SQLite (Embedded / File Database)</option>
+                </select>
+            </div>
+
+            <div id="mysql_fields" class="space-y-4">
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Database Host</label>
+                        <input type="text" name="db_host" value="127.0.0.1" class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Port</label>
+                        <input type="text" name="db_port" value="3306" class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Port</label>
-                    <input type="text" name="db_port" value="3306" required class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Database Name</label>
+                    <input type="text" name="db_name" value="card_creator_db" class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
                 </div>
-            </div>
 
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Database Name</label>
-                <input type="text" name="db_name" value="card_creator_db" required class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
-            </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Database Username</label>
+                    <input type="text" name="db_user" value="root" class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
+                </div>
 
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Database Username</label>
-                <input type="text" name="db_user" value="root" required class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Database Password</label>
-                <input type="password" name="db_pass" placeholder="••••••••" class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Database Password</label>
+                    <input type="password" name="db_pass" placeholder="••••••••" class="w-full px-3 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none focus:border-blue-500">
+                </div>
             </div>
 
             <button type="submit" class="w-full mt-4 py-3.5 px-4 bg-blue-600 hover:bg-blue-500 font-semibold text-white rounded-xl shadow-lg transition duration-200">
                 Install Database Schema & Proceed →
             </button>
         </form>
+        <script>
+        function toggleDbFields() {
+            var driver = document.getElementById('db_driver').value;
+            var fields = document.getElementById('mysql_fields');
+            if (driver === 'sqlite') {
+                fields.style.display = 'none';
+            } else {
+                fields.style.display = 'block';
+            }
+        }
+        </script>
     <?php endif; ?>
 
     <!-- STAGE 3: ADMIN ACCOUNT & SMTP -->

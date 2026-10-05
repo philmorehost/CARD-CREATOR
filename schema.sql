@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
 );
 
 CREATE TABLE IF NOT EXISTS `users` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
   `username` varchar(50) NOT NULL UNIQUE,
   `email` varchar(100) NOT NULL UNIQUE,
   `password_hash` varchar(255) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 );
 
 CREATE TABLE IF NOT EXISTS `ip_blocks` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
   `ip_address` varchar(45) NOT NULL,
   `reason` varchar(255) DEFAULT 'Brute force attempts',
   `blocked_until` datetime DEFAULT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `ip_blocks` (
 );
 
 CREATE TABLE IF NOT EXISTS `ip_whitelists` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
   `ip_address` varchar(45) NOT NULL UNIQUE,
   `label` varchar(100) DEFAULT 'Auto Whitelisted',
   `successful_sessions_count` int(11) NOT NULL DEFAULT 0,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `ip_whitelists` (
 );
 
 CREATE TABLE IF NOT EXISTS `login_logs` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
   `username` varchar(100) DEFAULT NULL,
   `ip_address` varchar(45) NOT NULL,
   `status` varchar(20) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `login_logs` (
 );
 
 CREATE TABLE IF NOT EXISTS `card_templates` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
   `title` varchar(100) NOT NULL,
   `type` varchar(20) NOT NULL DEFAULT 'id_card',
   `orientation` varchar(20) NOT NULL DEFAULT 'portrait',
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `card_templates` (
 );
 
 CREATE TABLE IF NOT EXISTS `saved_cards` (
-  `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
   `card_uuid` varchar(64) NOT NULL UNIQUE,
   `template_id` int(11) DEFAULT NULL,
   `title` varchar(100) NOT NULL,
