@@ -306,9 +306,11 @@ function renderCanvas() {
 }
 
 function drawFields() {
-    if (activeView !== 'front') return; // Render text & photo overlays on front side
-
     formFields.forEach(field => {
+        const targetSide = field.side || 'both';
+        if (targetSide !== 'both' && targetSide !== activeView) {
+            return;
+        }
         const val = fieldValues[field.id] || field.default || '';
 
         if (field.type === 'text' && val) {

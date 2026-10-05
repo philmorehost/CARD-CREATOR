@@ -17,7 +17,10 @@ $success = '';
 $showOtpForm = isset($_GET['action']) && $_GET['action'] === 'reset_otp';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $error = 'Invalid security token (CSRF). Please refresh and try again.';
+    } else {
+        $action = $_POST['action'] ?? '';
 
     if ($action === 'login') {
         $username = trim($_POST['username'] ?? '');
@@ -89,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -128,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php if (!$showOtpForm): ?>
         <!-- LOGIN FORM -->
         <form method="POST" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
             <input type="hidden" name="action" value="login">
 
             <div>
@@ -152,6 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php else: ?>
         <!-- OTP ACCOUNT UNBLOCK / RESET FORM -->
         <form method="POST" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
             <input type="hidden" name="action" value="verify_otp">
             <p class="text-xs text-slate-400 mb-2">Request OTP or enter your received OTP to unlock account and reset password.</p>
 

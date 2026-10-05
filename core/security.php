@@ -12,10 +12,81 @@ class SecurityEngine {
      */
     public static function sendEmail($to, $subject, $message) {
         $siteTitle = get_setting('site_title', 'CARD-CREATOR');
+        $smtpHost = get_setting('smtp_host', '');
+        $smtpPort = intval(get_setting('smtp_port', '587'));
+        $smtpUser = get_setting('smtp_user', '');
+        $smtpPass = get_setting('smtp_pass', '');
+        $fromEmail = get_setting('admin_email', 'no-reply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
 
+        if (!empty($smtpHost)) {
+            try {
+                $host = ($smtpPort == 465 ? 'ssl://' : '') . $smtpHost;
+                $socket = @fsockopen($host, $smtpPort, $errno, $errstr, 10);
+                if ($socket) {
+                    $read = function() use ($socket) {
+                        $res = '';
+                        while ($str = fgets($socket, 515)) {
+                            $res .= $str;
+                            if (substr($str, 3, 1) == ' ') break;
+                        }
+                        return $res;
+                    };
+
+                    $write = function($cmd) use ($socket) {
+                        fputs($socket, $cmd . "\r\n");
+                    };
+
+                    $read(); // banner
+                    $write("EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+                    $read();
+
+                    if ($smtpPort == 587) {
+                        $write("STARTTLS");
+                        $res = $read();
+                        if (substr($res, 0, 3) == '220') {
+                            stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT);
+                            $write("EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+                            $read();
+                        }
+                    }
+
+                    if (!empty($smtpUser) && !empty($smtpPass)) {
+                        $write("AUTH LOGIN");
+                        $read();
+                        $write(base64_encode($smtpUser));
+                        $read();
+                        $write(base64_encode($smtpPass));
+                        $read();
+                    }
+
+                    $write("MAIL FROM: <{$fromEmail}>");
+                    $read();
+                    $write("RCPT TO: <{$to}>");
+                    $read();
+                    $write("DATA");
+                    $read();
+
+                    $headers = "MIME-Version: 1.0\r\n";
+                    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+                    $headers .= "From: {$siteTitle} <{$fromEmail}>\r\n";
+                    $headers .= "To: <{$to}>\r\n";
+                    $headers .= "Subject: {$subject}\r\n";
+
+                    $write($headers . "\r\n" . $message . "\r\n.");
+                    $read();
+                    $write("QUIT");
+                    fclose($socket);
+                    return true;
+                }
+            } catch (\Exception $ex) {
+                error_log("SMTP Error: " . $ex->getMessage());
+            }
+        }
+
+        // Fallback to PHP mail() if SMTP is not configured or failed
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $headers .= "From: {$siteTitle} Security <no-reply@" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ">\r\n";
+        $headers .= "From: {$siteTitle} Security <{$fromEmail}>\r\n";
 
         @mail($to, $subject, $message, $headers);
         return true;

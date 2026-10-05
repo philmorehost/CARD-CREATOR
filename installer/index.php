@@ -46,13 +46,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // Connect to MySQL server first (without database) to create DB if needed
-                $dsnServer = "mysql:host={$host};port={$port};charset=utf8mb4";
-                $pdoServer = new PDO($dsnServer, $user, $pass, [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-                ]);
-
-                // Create database if it does not exist
-                $pdoServer->exec("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                try {
+                    $dsnServer = "mysql:host={$host};port={$port};charset=utf8mb4";
+                    $pdoServer = new PDO($dsnServer, $user, $pass, [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+                    ]);
+                    $pdoServer->exec("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                } catch (\Exception $eDb) {
+                    // Ignore if database already exists or if user lacks CREATE DATABASE privilege
+                }
 
                 // Connect to the specific database
                 $dsnDb = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
@@ -84,6 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'pass' => $pass
                 ], true) . ";\n";
 
+                if (!is_dir(__DIR__ . '/../config')) {
+                    mkdir(__DIR__ . '/../config', 0755, true);
+                }
                 file_put_contents(__DIR__ . '/../config/database.php', $configContent);
 
             } else {
@@ -116,6 +121,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'pass' => $pass
                 ], true) . ";\n";
 
+                if (!is_dir(__DIR__ . '/../config')) {
+                    mkdir(__DIR__ . '/../config', 0755, true);
+                }
                 file_put_contents(__DIR__ . '/../config/database.php', $configContent);
             }
 
@@ -139,23 +147,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($username) || empty($email) || empty($password)) {
             $error = 'Username, Email and Password are required.';
         } else {
-            $pdo = get_db_connection();
+            $dbErr = '';
+            $pdo = get_db_connection($dbErr);
             if (!$pdo) {
-                $error = 'Could not establish connection using saved database config.';
+                $error = 'Could not establish connection using saved database config: ' . ($dbErr ?: 'Unknown Error');
             } else {
                 try {
-                    // Create Admin Account
                     $passHash = password_hash($password, PASSWORD_DEFAULT);
-                    $stmt = $pdo->prepare("REPLACE INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, 'admin')");
-                    $stmt->execute(['u' => $username, 'e' => $email, 'p' => $passHash]);
 
-                    // Seed Settings
+                    // Insert or Update Admin Account safely
+                    $stmtCheck = $pdo->prepare("SELECT id FROM users WHERE username = :u OR email = :e");
+                    $stmtCheck->execute(['u' => $username, 'e' => $email]);
+                    $existingUser = $stmtCheck->fetch();
+
+                    if ($existingUser) {
+                        $stmtUpd = $pdo->prepare("UPDATE users SET username = :u, email = :e, password_hash = :p, role = 'admin', is_suspended = 0 WHERE id = :id");
+                        $stmtUpd->execute(['u' => $username, 'e' => $email, 'p' => $passHash, 'id' => $existingUser['id']]);
+                    } else {
+                        $stmtIns = $pdo->prepare("INSERT INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, 'admin')");
+                        $stmtIns->execute(['u' => $username, 'e' => $email, 'p' => $passHash]);
+                    }
+
+                    // Seed Settings safely
                     $settingsMap = [
                         'site_title' => $siteTitle,
                         'smtp_host' => $smtpHost,
                         'smtp_port' => $smtpPort,
                         'smtp_user' => $smtpUser,
                         'smtp_pass' => $smtpPass,
+                        'admin_email' => $email,
                         'demo_mode' => '0',
                         'security_user_protection' => '1',
                         'security_ip_protection' => '1',
@@ -167,15 +187,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'security_notify_bruteforce' => '1'
                     ];
 
-                    $stmtSetting = $pdo->prepare("REPLACE INTO settings (setting_key, setting_value) VALUES (:k, :v)");
                     foreach ($settingsMap as $k => $v) {
-                        $stmtSetting->execute(['k' => $k, 'v' => $v]);
+                        $stmtCheckSetting = $pdo->prepare("SELECT setting_key FROM settings WHERE setting_key = :k");
+                        $stmtCheckSetting->execute(['k' => $k]);
+                        if ($stmtCheckSetting->fetch()) {
+                            $stmtSetting = $pdo->prepare("UPDATE settings SET setting_value = :v WHERE setting_key = :k");
+                            $stmtSetting->execute(['v' => $v, 'k' => $k]);
+                        } else {
+                            $stmtSetting = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (:k, :v)");
+                            $stmtSetting->execute(['k' => $k, 'v' => $v]);
+                        }
                     }
 
                     // Seed Premium Templates
                     seed_default_templates($pdo);
 
                     // Mark installed
+                    if (!is_dir(__DIR__ . '/../config')) {
+                        mkdir(__DIR__ . '/../config', 0755, true);
+                    }
                     file_put_contents(__DIR__ . '/../config/installed.lock', date('Y-m-d H:i:s'));
 
                     header('Location: index.php?stage=4');
@@ -192,6 +222,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  * Seed premium sample templates from card-sample
  */
 function seed_default_templates($pdo) {
+    try {
+        $checkStmt = $pdo->query("SELECT COUNT(*) FROM card_templates");
+        if ($checkStmt && $checkStmt->fetchColumn() > 0) {
+            return;
+        }
+    } catch (\Exception $e) {}
+
     $samples = [
         [
             'title' => 'Corporate Identity ID Card',

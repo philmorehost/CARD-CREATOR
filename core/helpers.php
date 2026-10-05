@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 /**
  * Get system database connection if installed
  */
-function get_db_connection() {
+function get_db_connection(&$errorMsg = null) {
     static $pdo = null;
     if ($pdo !== null) {
         return $pdo;
@@ -14,6 +14,7 @@ function get_db_connection() {
 
     $configFile = __DIR__ . '/../config/database.php';
     if (!file_exists($configFile)) {
+        $errorMsg = 'Database configuration file (config/database.php) not found.';
         return null;
     }
 
@@ -28,14 +29,20 @@ function get_db_connection() {
             return $pdo;
         }
 
-        $dsn = "mysql:host={$config['host']};port=" . ($config['port'] ?? 3306) . ";dbname={$config['db_name']};charset=utf8mb4";
-        $pdo = new PDO($dsn, $config['user'], $config['pass'], [
+        $host = $config['host'] ?? '127.0.0.1';
+        $port = $config['port'] ?? 3306;
+        $dbName = $config['db_name'] ?? '';
+        $user = $config['user'] ?? '';
+        $pass = $config['pass'] ?? '';
+
+        $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
+        $pdo = new PDO($dsn, $user, $pass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
         ]);
         return $pdo;
     } catch (\PDOException $e) {
+        $errorMsg = $e->getMessage();
         error_log("Database connection error: " . $e->getMessage());
         return null;
     }

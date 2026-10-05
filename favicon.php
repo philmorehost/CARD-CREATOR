@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/core/helpers.php';
 
 $siteTitle = get_setting('site_title', 'CARD-CREATOR');
 $firstLetter = strtoupper(substr(trim($siteTitle ?: 'C'), 0, 1));

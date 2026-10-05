@@ -18,9 +18,13 @@ $messageType = '';
 
 // Handle Settings Update / Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $message = 'Invalid security token (CSRF). Please refresh and try again.';
+        $messageType = 'error';
+    } else {
+        $action = $_POST['action'] ?? '';
 
-    if (is_demo_mode()) {
+    if (is_demo_mode() && !($action === 'save_settings' && isset($_POST['demo_mode']) && $_POST['demo_mode'] === '0')) {
         $message = 'System is currently running in DEMO MODE. Changes are disabled.';
         $messageType = 'error';
     } else {
@@ -83,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+}
 }
 
 // Fetch stats & data
@@ -167,6 +172,7 @@ $demoMode = get_setting('demo_mode', '0') === '1';
         <!-- Left 2 Cols: Security & SMTP Settings -->
         <div class="lg:col-span-2 space-y-8">
             <form method="POST" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-6">
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                 <input type="hidden" name="action" value="save_settings">
 
                 <div class="flex justify-between items-center border-b border-slate-700 pb-4">
@@ -284,6 +290,7 @@ $demoMode = get_setting('demo_mode', '0') === '1';
                 </div>
 
                 <form method="POST" class="flex space-x-2">
+                    <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                     <input type="hidden" name="action" value="add_whitelist_ip">
                     <input type="text" name="ip_address" placeholder="Add IP (e.g. 192.168.1.1)" required class="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
                     <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 font-semibold text-xs text-white rounded-xl whitespace-nowrap">Add IP</button>
@@ -305,6 +312,7 @@ $demoMode = get_setting('demo_mode', '0') === '1';
                                 </div>
                             </div>
                             <form method="POST">
+                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                 <input type="hidden" name="action" value="remove_whitelist_ip">
                                 <input type="hidden" name="wl_id" value="<?= $wl['id'] ?>">
                                 <button type="submit" class="text-xs text-red-400 hover:text-red-300">Remove</button>
@@ -327,6 +335,7 @@ $demoMode = get_setting('demo_mode', '0') === '1';
                                 <p class="text-[10px] text-slate-400">Blocked until: <?= $b['blocked_until'] ?></p>
                             </div>
                             <form method="POST">
+                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                 <input type="hidden" name="action" value="unblock_ip">
                                 <input type="hidden" name="ip_id" value="<?= $b['id'] ?>">
                                 <button type="submit" class="text-xs px-2.5 py-1 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200">Unblock</button>
@@ -347,6 +356,7 @@ $demoMode = get_setting('demo_mode', '0') === '1';
                                 <p class="text-[10px] text-slate-400"><?= htmlspecialchars($su['email']) ?></p>
                             </div>
                             <form method="POST">
+                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
                                 <input type="hidden" name="action" value="unsuspend_user">
                                 <input type="hidden" name="user_id" value="<?= $su['id'] ?>">
                                 <button type="submit" class="text-xs px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 font-semibold text-white rounded-lg">Unlock User</button>
