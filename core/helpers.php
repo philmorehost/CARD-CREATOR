@@ -26,6 +26,29 @@ function get_db_connection(&$errorMsg = null) {
             $pdo = new PDO("sqlite:" . $dbPath);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+            // Auto-migrate tables if missing
+            $pdo->exec("CREATE TABLE IF NOT EXISTS card_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                cardholder_name VARCHAR(150),
+                card_type VARCHAR(50) NOT NULL,
+                template_title VARCHAR(150),
+                data_json TEXT,
+                preview_front TEXT,
+                preview_back TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            // Auto-migrate additional columns if missing
+            try { $pdo->exec("ALTER TABLE users ADD COLUMN otp_code VARCHAR(10)"); } catch (\Exception $e) {}
+            try { $pdo->exec("ALTER TABLE users ADD COLUMN otp_expires_at DATETIME"); } catch (\Exception $e) {}
+            try { $pdo->exec("ALTER TABLE login_logs ADD COLUMN user_agent VARCHAR(255)"); } catch (\Exception $e) {}
+            try { $pdo->exec("ALTER TABLE ip_blocks ADD COLUMN is_permanent INTEGER DEFAULT 0"); } catch (\Exception $e) {}
+            try { $pdo->exec("ALTER TABLE ip_whitelists ADD COLUMN label VARCHAR(100)"); } catch (\Exception $e) {}
+            try { $pdo->exec("ALTER TABLE ip_whitelists ADD COLUMN successful_sessions_count INTEGER DEFAULT 1"); } catch (\Exception $e) {}
+            try { $pdo->exec("ALTER TABLE ip_whitelists ADD COLUMN is_auto INTEGER DEFAULT 0"); } catch (\Exception $e) {}
+
             return $pdo;
         }
 
@@ -148,4 +171,72 @@ function get_client_ip() {
  */
 function is_installed() {
     return file_exists(__DIR__ . '/../config/installed.lock');
+}
+
+/**
+ * Image Compression and Resizing Helper using GD Library
+ */
+function compressAndResizeImage($sourcePath, $targetPath, $maxWidth = 800, $maxHeight = 800, $quality = 85) {
+    if (!extension_loaded('gd')) {
+        return copy($sourcePath, $targetPath);
+    }
+
+    $imageInfo = @getimagesize($sourcePath);
+    if (!$imageInfo) {
+        return copy($sourcePath, $targetPath);
+    }
+
+    $width = $imageInfo[0];
+    $height = $imageInfo[1];
+    $mime = $imageInfo['mime'];
+
+    switch ($mime) {
+        case 'image/jpeg':
+            $srcImage = @imagecreatefromjpeg($sourcePath);
+            break;
+        case 'image/png':
+            $srcImage = @imagecreatefrompng($sourcePath);
+            break;
+        case 'image/webp':
+            $srcImage = @imagecreatefromwebp($sourcePath);
+            break;
+        default:
+            return copy($sourcePath, $targetPath);
+    }
+
+    if (!$srcImage) {
+        return copy($sourcePath, $targetPath);
+    }
+
+    // Calculate dimensions maintaining aspect ratio
+    $ratio = min($maxWidth / $width, $maxHeight / $height);
+    if ($ratio < 1) {
+        $newWidth = (int) round($width * $ratio);
+        $newHeight = (int) round($height * $ratio);
+    } else {
+        $newWidth = $width;
+        $newHeight = $height;
+    }
+
+    $dstImage = imagecreatetruecolor($newWidth, $newHeight);
+
+    if ($mime === 'image/png' || $mime === 'image/webp') {
+        imagealphablending($dstImage, false);
+        imagesavealpha($dstImage, true);
+    }
+
+    imagecopyresampled($dstImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+    // Save as WebP if supported, otherwise JPEG
+    $success = false;
+    if (function_exists('imagewebp')) {
+        $success = imagewebp($dstImage, $targetPath, $quality);
+    } else {
+        $success = imagejpeg($dstImage, $targetPath, $quality);
+    }
+
+    imagedestroy($srcImage);
+    imagedestroy($dstImage);
+
+    return $success;
 }

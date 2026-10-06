@@ -85,6 +85,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'User account unlocked successfully!';
                 $messageType = 'success';
             }
+        } elseif ($action === 'create_staff') {
+            $staffUsername = trim($_POST['username'] ?? '');
+            $staffEmail = trim($_POST['email'] ?? '');
+            $staffPassword = $_POST['password'] ?? '';
+
+            if (empty($staffUsername) || empty($staffEmail) || empty($staffPassword)) {
+                $message = 'All fields are required for staff user creation.';
+                $messageType = 'error';
+            } else {
+                try {
+                    $passHash = password_hash($staffPassword, PASSWORD_BCRYPT);
+                    $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role) VALUES (:u, :e, :p, 'staff')");
+                    $stmt->execute(['u' => $staffUsername, 'e' => $staffEmail, 'p' => $passHash]);
+                    $message = 'Staff account created successfully!';
+                    $messageType = 'success';
+                } catch (\Exception $e) {
+                    $message = 'Failed to create staff account (username/email already exists).';
+                    $messageType = 'error';
+                }
+            }
         }
     }
 }
@@ -92,6 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Fetch stats & data
 $loginLogs = $pdo ? $pdo->query("SELECT * FROM login_logs ORDER BY created_at DESC LIMIT 50")->fetchAll() : [];
+$cardHistory = $pdo ? $pdo->query("SELECT h.*, u.username FROM card_history h LEFT JOIN users u ON h.user_id = u.id ORDER BY h.id DESC LIMIT 50")->fetchAll() : [];
+$staffUsers = $pdo ? $pdo->query("SELECT * FROM users ORDER BY id DESC")->fetchAll() : [];
 $ipBlocks = $pdo ? $pdo->query("SELECT * FROM ip_blocks ORDER BY created_at DESC")->fetchAll() : [];
 $ipWhitelists = $pdo ? $pdo->query("SELECT * FROM ip_whitelists ORDER BY created_at DESC")->fetchAll() : [];
 $suspendedUsers = $pdo ? $pdo->query("SELECT * FROM users WHERE is_suspended = 1")->fetchAll() : [];
@@ -110,6 +132,7 @@ $demoMode = get_setting('demo_mode', '0') === '1';
     <link rel="icon" type="image/svg+xml" href="../favicon.php">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style> body { font-family: 'Inter', sans-serif; } </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
@@ -369,6 +392,105 @@ $demoMode = get_setting('demo_mode', '0') === '1';
         </div>
     </div>
 
+    <!-- STAFF USER MANAGEMENT SECTION -->
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-6">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+            <div>
+                <h3 class="font-bold text-white text-base">Staff User Management</h3>
+                <p class="text-xs text-slate-400">Create and manage staff accounts authorized to design cards in the studio.</p>
+            </div>
+        </div>
+
+        <form method="POST" class="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-900/60 p-4 rounded-xl border border-slate-700">
+            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+            <input type="hidden" name="action" value="create_staff">
+            <input type="text" name="username" placeholder="Staff Username" required class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+            <input type="email" name="email" placeholder="Staff Email" required class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+            <input type="password" name="password" placeholder="Password" required class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white">
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white rounded-xl shadow">
+                + Create Staff User
+            </button>
+        </form>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/60 text-slate-400 uppercase">
+                    <tr>
+                        <th class="p-3 rounded-l-xl">ID</th>
+                        <th class="p-3">Username</th>
+                        <th class="p-3">Email</th>
+                        <th class="p-3">Role</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3 rounded-r-xl">Created At</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/60">
+                    <?php foreach ($staffUsers as $u): ?>
+                        <tr class="hover:bg-slate-700/30">
+                            <td class="p-3 font-mono text-slate-400">#<?= $u['id'] ?></td>
+                            <td class="p-3 font-bold text-white"><?= htmlspecialchars($u['username']) ?></td>
+                            <td class="p-3 text-slate-300"><?= htmlspecialchars($u['email']) ?></td>
+                            <td class="p-3">
+                                <span class="px-2 py-0.5 text-[10px] uppercase font-bold rounded <?= $u['role'] === 'admin' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30' ?>">
+                                    <?= htmlspecialchars($u['role']) ?>
+                                </span>
+                            </td>
+                            <td class="p-3">
+                                <?= $u['is_suspended'] == 1 ? '<span class="text-red-400 font-bold">Suspended</span>' : '<span class="text-emerald-400 font-bold">Active</span>' ?>
+                            </td>
+                            <td class="p-3 font-mono text-slate-400"><?= $u['created_at'] ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- CARD HISTORY & BATCH PDF EXPORT SECTION -->
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-6">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+            <div>
+                <h3 class="font-bold text-white text-base">Generated Card History Log</h3>
+                <p class="text-xs text-slate-400">System-wide record of cards created by staff and admin users.</p>
+            </div>
+            <button onclick="exportBatchPDF()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 font-bold text-xs text-white rounded-xl shadow flex items-center space-x-1.5">
+                <span>📄 Batch Export All Cards to PDF</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="historyGrid">
+            <?php if (empty($cardHistory)): ?>
+                <p class="text-xs text-slate-500 italic col-span-3">No cards generated in history yet.</p>
+            <?php else: foreach ($cardHistory as $h): ?>
+                <div class="p-4 bg-slate-900/80 border border-slate-700/80 rounded-2xl space-y-3 card-history-item"
+                     data-front="<?= htmlspecialchars($h['preview_front'] ?? '') ?>"
+                     data-back="<?= htmlspecialchars($h['preview_back'] ?? '') ?>"
+                     data-name="<?= htmlspecialchars($h['cardholder_name'] ?? 'Cardholder') ?>">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-bold text-white text-sm"><?= htmlspecialchars($h['cardholder_name'] ?: 'Cardholder') ?></p>
+                            <p class="text-[10px] text-slate-400"><?= htmlspecialchars($h['template_title']) ?> · by <?= htmlspecialchars($h['username'] ?: 'System') ?></p>
+                        </div>
+                        <span class="text-[9px] px-2 py-0.5 rounded uppercase font-bold bg-blue-600/20 text-blue-300 border border-blue-500/30">
+                            <?= htmlspecialchars($h['card_type']) ?>
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 h-28 bg-slate-950 rounded-xl p-2 border border-slate-800 items-center justify-center overflow-hidden">
+                        <?php if (!empty($h['preview_front'])): ?>
+                            <img src="<?= htmlspecialchars($h['preview_front']) ?>" class="max-h-24 max-w-full mx-auto object-contain rounded border border-slate-700">
+                        <?php endif; ?>
+                        <?php if (!empty($h['preview_back'])): ?>
+                            <img src="<?= htmlspecialchars($h['preview_back']) ?>" class="max-h-24 max-w-full mx-auto object-contain rounded border border-slate-700">
+                        <?php endif; ?>
+                    </div>
+
+                    <p class="text-[10px] text-slate-500 text-right font-mono"><?= $h['created_at'] ?></p>
+                </div>
+            <?php endforeach; endif; ?>
+        </div>
+    </div>
+
     <!-- BOTTOM SECTION: LOGIN HISTORY LOGS -->
     <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-4">
         <h3 class="font-bold text-white text-base">Login History & Protection Activity Logs</h3>
@@ -408,6 +530,40 @@ $demoMode = get_setting('demo_mode', '0') === '1';
     </div>
 
 </div>
+
+<script>
+function exportBatchPDF() {
+    const items = document.querySelectorAll('.card-history-item');
+    if (items.length === 0) {
+        alert('No generated cards in history to export.');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [600, 960] });
+
+    let pageAdded = false;
+
+    items.forEach((item, index) => {
+        const front = item.getAttribute('data-front');
+        const back = item.getAttribute('data-back');
+
+        if (front && front.length > 50) {
+            if (pageAdded) pdf.addPage([600, 960], 'portrait');
+            pdf.addImage(front, 'PNG', 0, 0, 600, 960);
+            pageAdded = true;
+        }
+
+        if (back && back.length > 50) {
+            if (pageAdded) pdf.addPage([600, 960], 'portrait');
+            pdf.addImage(back, 'PNG', 0, 0, 600, 960);
+            pageAdded = true;
+        }
+    });
+
+    pdf.save(`System_Card_History_Batch_${Date.now()}.pdf`);
+}
+</script>
 
 </body>
 </html>

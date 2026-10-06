@@ -27,17 +27,19 @@ if ($file['size'] > 8 * 1024 * 1024) {
     json_response(0, 'File size exceeds maximum 8 MB limit');
 }
 
-$filename = 'img_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
 $targetDir = __DIR__ . '/../uploads/photos/';
 if (!is_dir($targetDir)) {
     mkdir($targetDir, 0777, true);
 }
 
+$outputExt = function_exists('imagewebp') ? 'webp' : 'jpg';
+$filename = 'img_' . time() . '_' . bin2hex(random_bytes(6)) . '.' . $outputExt;
 $targetPath = $targetDir . $filename;
-if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-    json_response(1, 'Upload successful', [
+
+if (compressAndResizeImage($file['tmp_name'], $targetPath, 800, 800, 85)) {
+    json_response(1, 'Upload compressed successfully', [
         'url' => 'uploads/photos/' . $filename
     ]);
 } else {
-    json_response(0, 'Failed to save uploaded file');
+    json_response(0, 'Failed to process and compress uploaded file');
 }

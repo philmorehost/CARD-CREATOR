@@ -88,6 +88,13 @@ class SecurityEngine {
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         $headers .= "From: {$siteTitle} Security <{$fromEmail}>\r\n";
 
+        $logDir = __DIR__ . '/../logs/';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0777, true);
+        }
+        $logEntry = "[" . date('Y-m-d H:i:s') . "] TO: {$to} | SUBJECT: {$subject} | METHOD: Native mail() Fallback\n";
+        @file_put_contents($logDir . 'email.log', $logEntry, FILE_APPEND);
+
         @mail($to, $subject, $message, $headers);
         return true;
     }

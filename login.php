@@ -8,7 +8,11 @@ if (!is_installed()) {
 }
 
 if (isset($_SESSION['user_id'])) {
-    header('Location: admin/dashboard.php');
+    if (($_SESSION['user_role'] ?? 'staff') === 'admin') {
+        header('Location: admin/dashboard.php');
+    } else {
+        header('Location: studio.php');
+    }
     exit;
 }
 
@@ -52,7 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $_SESSION['username'] = $user['username'];
                             $_SESSION['user_role'] = $user['role'];
 
-                            header('Location: admin/dashboard.php');
+                            if ($user['role'] === 'admin') {
+                                header('Location: admin/dashboard.php');
+                            } else {
+                                header('Location: studio.php');
+                            }
                             exit;
                         }
                     } else {
