@@ -40,6 +40,13 @@ $pdo = get_db_connection();
 $message = '';
 $messageType = '';
 
+$currentAdmin = null;
+if ($pdo) {
+    $currentAdminStmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+    $currentAdminStmt->execute(['id' => $_SESSION['user_id']]);
+    $currentAdmin = $currentAdminStmt->fetch();
+}
+
 // Handle Settings & Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
@@ -55,7 +62,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($action === 'test_smtp') {
                 $recipient = trim($_POST['test_email'] ?? $currentAdmin['email'] ?? 'admin@example.com');
                 if (empty($recipient)) $recipient = 'admin@example.com';
-                $res = SecurityEngine::sendEmail($recipient, "SMTP Configuration Test - CARD-CREATOR", "<p>Hello Admin,</p><p>This is a test email sent from <strong>" . htmlspecialchars(get_setting('site_title', 'CARD-CREATOR')) . "</strong> to verify your SMTP settings.</p><p>If you received this message, your SMTP email delivery configuration is working correctly!</p>");
+                $testMsg = "<h2>SMTP Diagnostic Test Passed</h2>
+                <p>Hello Admin,</p>
+                <p>This is a verification test email dispatched from <strong>" . htmlspecialchars(get_setting('site_title', 'CARD-CREATOR')) . "</strong>.</p>
+                <p>If you are reading this email, your SMTP settings and email delivery engine are configured and operating flawlessly!</p>
+                <table class='info-table'>
+                    <tr><td><strong>SMTP Host</strong></td><td>" . htmlspecialchars(get_setting('smtp_host', 'N/A')) . "</td></tr>
+                    <tr><td><strong>SMTP Port</strong></td><td>" . htmlspecialchars(get_setting('smtp_port', '587')) . "</td></tr>
+                    <tr><td><strong>Test Status</strong></td><td><span style='color:#16a34a;font-weight:bold;'>Verified Successfully</span></td></tr>
+                </table>";
+                $res = SecurityEngine::sendEmail($recipient, "SMTP Configuration Test - CARD-CREATOR", $testMsg, "Your SMTP settings are working properly");
                 json_response($res['success'] ? 'success' : 'error', $res['success'] ? 'SMTP Test Email Sent Successfully to ' . htmlspecialchars($recipient) : $res['error']);
             } elseif ($action === 'save_settings') {
                 $settingsKeys = [

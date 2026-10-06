@@ -75,6 +75,7 @@ $templates = [
         'height_px' => 960,
         'primary_color' => '#1e3a8a',
         'secondary_color' => '#2563eb',
+        'bg_variant' => 'variant_a',
         'fields_json' => json_encode([
             ['id' => 'company_name', 'label' => 'Company Name', 'type' => 'text', 'default' => 'GLOBAL TECH SYSTEMS', 'x' => 300, 'y' => 60, 'font' => 'Inter', 'size' => 22, 'color' => '#ffffff', 'align' => 'center', 'bold' => true, 'side' => 'front'],
             ['id' => 'subtitle', 'label' => 'Header Subtitle', 'type' => 'text', 'default' => 'AUTHORIZED ACCESS BADGE', 'x' => 300, 'y' => 85, 'font' => 'Inter', 'size' => 12, 'color' => '#93c5fd', 'align' => 'center', 'bold' => false, 'side' => 'front'],
@@ -101,6 +102,7 @@ $templates = [
         'height_px' => 960,
         'primary_color' => '#0f172a',
         'secondary_color' => '#6366f1',
+        'bg_variant' => 'variant_d',
         'fields_json' => json_encode([
             ['id' => 'company_name', 'label' => 'Company Name', 'type' => 'text', 'default' => 'CYBERDYNE LABS', 'x' => 300, 'y' => 60, 'font' => 'Inter', 'size' => 24, 'color' => '#f8fafc', 'align' => 'center', 'bold' => true, 'side' => 'front'],
             ['id' => 'subtitle', 'label' => 'Subtitle', 'type' => 'text', 'default' => 'SECURITY PASS LEVEL 5', 'x' => 300, 'y' => 85, 'font' => 'Inter', 'size' => 12, 'color' => '#818cf8', 'align' => 'center', 'bold' => true, 'side' => 'front'],
@@ -123,6 +125,7 @@ $templates = [
         'height_px' => 960,
         'primary_color' => '#0284c7',
         'secondary_color' => '#0d9488',
+        'bg_variant' => 'variant_b',
         'fields_json' => json_encode([
             ['id' => 'company_name', 'label' => 'Hospital Name', 'type' => 'text', 'default' => 'METROPOLITAN MEDICAL CENTER', 'x' => 300, 'y' => 60, 'font' => 'Inter', 'size' => 20, 'color' => '#ffffff', 'align' => 'center', 'bold' => true, 'side' => 'front'],
             ['id' => 'photo', 'label' => 'Doctor Photo', 'type' => 'file', 'x' => 200, 'y' => 180, 'width' => 200, 'height' => 240, 'shape' => 'round', 'side' => 'front'],
@@ -143,6 +146,7 @@ $templates = [
         'height_px' => 960,
         'primary_color' => '#4338ca',
         'secondary_color' => '#be185d',
+        'bg_variant' => 'variant_c',
         'fields_json' => json_encode([
             ['id' => 'company_name', 'label' => 'University Name', 'type' => 'text', 'default' => 'STANFORD STATE UNIVERSITY', 'x' => 300, 'y' => 60, 'font' => 'Inter', 'size' => 20, 'color' => '#ffffff', 'align' => 'center', 'bold' => true, 'side' => 'front'],
             ['id' => 'photo', 'label' => 'Student Photo', 'type' => 'file', 'x' => 200, 'y' => 180, 'width' => 200, 'height' => 240, 'shape' => 'round', 'side' => 'front'],
@@ -162,6 +166,7 @@ $templates = [
         'height_px' => 600,
         'primary_color' => '#0f172a',
         'secondary_color' => '#2563eb',
+        'bg_variant' => 'variant_a',
         'fields_json' => json_encode([
             ['id' => 'logo', 'label' => 'Company Logo / Badge', 'type' => 'file', 'x' => 80, 'y' => 80, 'width' => 140, 'height' => 100, 'shape' => 'rect', 'side' => 'front'],
             ['id' => 'company_name', 'label' => 'Company Name', 'type' => 'text', 'default' => 'APEX INNOVATIONS INC.', 'x' => 240, 'y' => 135, 'font' => 'Inter', 'size' => 26, 'color' => '#0f172a', 'align' => 'left', 'bold' => true, 'side' => 'front'],
@@ -184,6 +189,7 @@ $templates = [
         'height_px' => 600,
         'primary_color' => '#1e1b4b',
         'secondary_color' => '#d97706',
+        'bg_variant' => 'variant_b',
         'fields_json' => json_encode([
             ['id' => 'company_name', 'label' => 'Company Name', 'type' => 'text', 'default' => 'LUXURY CAPITAL PARTNERS', 'x' => 80, 'y' => 100, 'font' => 'Inter', 'size' => 24, 'color' => '#d97706', 'align' => 'left', 'bold' => true, 'side' => 'front'],
             ['id' => 'name', 'label' => 'Full Name', 'type' => 'text', 'default' => 'VICTORIA CROSS', 'x' => 80, 'y' => 280, 'font' => 'Inter', 'size' => 36, 'color' => '#0f172a', 'align' => 'left', 'bold' => true, 'side' => 'front'],
@@ -203,6 +209,7 @@ $templates = [
         'height_px' => 600,
         'primary_color' => '#090d16',
         'secondary_color' => '#10b981',
+        'bg_variant' => 'variant_d',
         'fields_json' => json_encode([
             ['id' => 'company_name', 'label' => 'Company Name', 'type' => 'text', 'default' => 'NEXTGEN AI LABS', 'x' => 80, 'y' => 100, 'font' => 'Inter', 'size' => 26, 'color' => '#10b981', 'align' => 'left', 'bold' => true, 'side' => 'front'],
             ['id' => 'name', 'label' => 'Full Name', 'type' => 'text', 'default' => 'DR. EMETT BROWN', 'x' => 80, 'y' => 280, 'font' => 'Inter', 'size' => 36, 'color' => '#ffffff', 'align' => 'left', 'bold' => true, 'side' => 'front'],
@@ -221,6 +228,7 @@ $templates = [
         'height_px' => 600,
         'primary_color' => '#ec4899',
         'secondary_color' => '#8b5cf6',
+        'bg_variant' => 'variant_c',
         'fields_json' => json_encode([
             ['id' => 'company_name', 'label' => 'Agency Name', 'type' => 'text', 'default' => 'PIXEL CRAFT STUDIO', 'x' => 80, 'y' => 100, 'font' => 'Inter', 'size' => 26, 'color' => '#ec4899', 'align' => 'left', 'bold' => true, 'side' => 'front'],
             ['id' => 'name', 'label' => 'Full Name', 'type' => 'text', 'default' => 'SOPHIA CHEN', 'x' => 80, 'y' => 280, 'font' => 'Inter', 'size' => 36, 'color' => '#0f172a', 'align' => 'left', 'bold' => true, 'side' => 'front'],
@@ -308,7 +316,7 @@ $activeTemplate = $templates[0];
         </div>
 
         <!-- Palette & Styling Customizer -->
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-lg grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Primary Theme Color</label>
                 <input type="color" id="primaryColorPicker" value="#1e3a8a" onchange="updateColors()" class="w-full h-10 bg-slate-900 rounded-xl cursor-pointer border border-slate-700">
@@ -316,6 +324,15 @@ $activeTemplate = $templates[0];
             <div>
                 <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Secondary Accent Color</label>
                 <input type="color" id="secondaryColorPicker" value="#2563eb" onchange="updateColors()" class="w-full h-10 bg-slate-900 rounded-xl cursor-pointer border border-slate-700">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">Background Design Shape</label>
+                <select id="bgVariantSelect" onchange="updateBgVariant(this.value)" class="w-full h-10 px-3 bg-slate-900 text-white rounded-xl border border-slate-700 text-xs font-semibold focus:outline-none focus:border-blue-500">
+                    <option value="variant_a">🎨 Variant 1: Executive Header & Accent Bars</option>
+                    <option value="variant_b">🌊 Variant 2: Wavy Fluid Curves & Layers</option>
+                    <option value="variant_c">📐 Variant 3: Geometric Slants & Angular Stripes</option>
+                    <option value="variant_d">⚡ Variant 4: Cyber Mesh & Tech Arcs</option>
+                </select>
             </div>
         </div>
 
@@ -469,11 +486,13 @@ let fieldValues = {};
 let loadedImages = {};
 let primaryColor = currentTemplate.primary_color || '#1e3a8a';
 let secondaryColor = currentTemplate.secondary_color || '#2563eb';
+let selectedBgVariant = currentTemplate.bg_variant || 'variant_a';
 
 const canvas = document.getElementById('cardCanvas');
 const ctx = canvas.getContext('2d');
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('bgVariantSelect').value = selectedBgVariant;
     loadTemplate(currentTemplate);
     <?php if ($profileMsg): ?>
         openProfileModal();
@@ -492,8 +511,10 @@ function selectTemplate(tmpl) {
     currentTemplate = tmpl;
     primaryColor = tmpl.primary_color || '#1e3a8a';
     secondaryColor = tmpl.secondary_color || '#2563eb';
+    selectedBgVariant = tmpl.bg_variant || 'variant_a';
     document.getElementById('primaryColorPicker').value = primaryColor;
     document.getElementById('secondaryColorPicker').value = secondaryColor;
+    document.getElementById('bgVariantSelect').value = selectedBgVariant;
     activeView = 'front';
     updateViewButtons();
     loadTemplate(tmpl);
@@ -502,6 +523,11 @@ function selectTemplate(tmpl) {
 function updateColors() {
     primaryColor = document.getElementById('primaryColorPicker').value;
     secondaryColor = document.getElementById('secondaryColorPicker').value;
+    renderCanvas();
+}
+
+function updateBgVariant(val) {
+    selectedBgVariant = val;
     renderCanvas();
 }
 
@@ -742,38 +768,197 @@ function renderIDCardBackground(cCtx, side, w, h) {
         cCtx.fillStyle = '#ffffff';
         cCtx.fillRect(0, 0, w, h);
 
-        const headGrad = cCtx.createLinearGradient(0, 0, w, 220);
-        headGrad.addColorStop(0, primaryColor);
-        headGrad.addColorStop(1, secondaryColor);
-        cCtx.fillStyle = headGrad;
-        cCtx.beginPath();
-        cCtx.moveTo(0, 0);
-        cCtx.lineTo(w, 0);
-        cCtx.lineTo(w, 180);
-        cCtx.quadraticCurveTo(w / 2, 230, 0, 180);
-        cCtx.closePath();
-        cCtx.fill();
+        if (selectedBgVariant === 'variant_b') {
+            // Variant B: Wavy Fluid Curves (Matching attached reference image)
+            // Top Sleek Header Curve
+            const headGrad = cCtx.createLinearGradient(0, 0, w, 160);
+            headGrad.addColorStop(0, primaryColor);
+            headGrad.addColorStop(1, secondaryColor);
+            cCtx.fillStyle = headGrad;
+            cCtx.beginPath();
+            cCtx.moveTo(0, 0);
+            cCtx.lineTo(w, 0);
+            cCtx.lineTo(w, 140);
+            cCtx.bezierCurveTo(w * 0.65, 175, w * 0.35, 110, 0, 150);
+            cCtx.closePath();
+            cCtx.fill();
 
-        cCtx.save();
-        cCtx.fillStyle = '#334155';
-        cCtx.beginPath();
-        cCtx.roundRect(w / 2 - 40, 12, 80, 14, 7);
-        cCtx.fill();
-        cCtx.restore();
+            // Bottom Wave Layer 1 (Light Accent Blue / Semi-transparent Curve)
+            const waveGrad1 = cCtx.createLinearGradient(0, h - 300, w, h);
+            waveGrad1.addColorStop(0, secondaryColor);
+            waveGrad1.addColorStop(1, '#38bdf8');
+            cCtx.fillStyle = waveGrad1;
+            cCtx.beginPath();
+            cCtx.moveTo(0, h - 260);
+            cCtx.bezierCurveTo(w * 0.35, h - 380, w * 0.75, h - 160, w, h - 240);
+            cCtx.lineTo(w, h);
+            cCtx.lineTo(0, h);
+            cCtx.closePath();
+            cCtx.fill();
 
-        const footGrad = cCtx.createLinearGradient(0, h - 80, w, h);
-        footGrad.addColorStop(0, secondaryColor);
-        footGrad.addColorStop(1, '#0f172a');
-        cCtx.fillStyle = footGrad;
-        cCtx.beginPath();
-        cCtx.moveTo(0, h - 50);
-        cCtx.quadraticCurveTo(w / 2, h - 90, w, h - 50);
-        cCtx.lineTo(w, h);
-        cCtx.lineTo(0, h);
-        cCtx.closePath();
-        cCtx.fill();
+            // Bottom Wave Layer 2 (Primary Fluid Wave)
+            const waveGrad2 = cCtx.createLinearGradient(0, h - 240, w, h);
+            waveGrad2.addColorStop(0, primaryColor);
+            waveGrad2.addColorStop(1, secondaryColor);
+            cCtx.fillStyle = waveGrad2;
+            cCtx.beginPath();
+            cCtx.moveTo(0, h - 220);
+            cCtx.bezierCurveTo(w * 0.3, h - 320, w * 0.7, h - 100, w, h - 180);
+            cCtx.lineTo(w, h);
+            cCtx.lineTo(0, h);
+            cCtx.closePath();
+            cCtx.fill();
+
+            // White Wave Border Outline / Separation Accent
+            cCtx.strokeStyle = '#ffffff';
+            cCtx.lineWidth = 6;
+            cCtx.beginPath();
+            cCtx.moveTo(0, h - 220);
+            cCtx.bezierCurveTo(w * 0.3, h - 320, w * 0.7, h - 100, w, h - 180);
+            cCtx.stroke();
+
+            // Top Lanyard Slot Notch
+            cCtx.save();
+            cCtx.fillStyle = '#334155';
+            cCtx.beginPath();
+            cCtx.roundRect(w / 2 - 40, 10, 80, 14, 7);
+            cCtx.fill();
+            cCtx.restore();
+
+        } else if (selectedBgVariant === 'variant_c') {
+            // Variant C: Geometric Slants & Angular Stripes
+            // Top Right Angled Banner
+            const geomHead = cCtx.createLinearGradient(0, 0, w, 220);
+            geomHead.addColorStop(0, primaryColor);
+            geomHead.addColorStop(1, secondaryColor);
+            cCtx.fillStyle = geomHead;
+            cCtx.beginPath();
+            cCtx.moveTo(0, 0);
+            cCtx.lineTo(w, 0);
+            cCtx.lineTo(w, 200);
+            cCtx.lineTo(0, 120);
+            cCtx.closePath();
+            cCtx.fill();
+
+            // Secondary Diagonal Stripe
+            cCtx.fillStyle = secondaryColor;
+            cCtx.beginPath();
+            cCtx.moveTo(0, 120);
+            cCtx.lineTo(w, 200);
+            cCtx.lineTo(w, 230);
+            cCtx.lineTo(0, 150);
+            cCtx.closePath();
+            cCtx.fill();
+
+            // Bottom Left Polygon Wedge
+            const geomFoot = cCtx.createLinearGradient(0, h - 200, w, h);
+            geomFoot.addColorStop(0, primaryColor);
+            geomFoot.addColorStop(1, '#0f172a');
+            cCtx.fillStyle = geomFoot;
+            cCtx.beginPath();
+            cCtx.moveTo(0, h - 160);
+            cCtx.lineTo(w * 0.75, h);
+            cCtx.lineTo(0, h);
+            cCtx.closePath();
+            cCtx.fill();
+
+            // Top Lanyard Slot
+            cCtx.save();
+            cCtx.fillStyle = '#334155';
+            cCtx.beginPath();
+            cCtx.roundRect(w / 2 - 40, 10, 80, 14, 7);
+            cCtx.fill();
+            cCtx.restore();
+
+        } else if (selectedBgVariant === 'variant_d') {
+            // Variant D: Tech Mesh & Cyber Curved Arcs
+            const cyberBg = cCtx.createLinearGradient(0, 0, w, h);
+            cyberBg.addColorStop(0, '#090d16');
+            cyberBg.addColorStop(1, '#0f172a');
+            cCtx.fillStyle = cyberBg;
+            cCtx.fillRect(0, 0, w, h);
+
+            // Cyber Curved Header Arc
+            const cyberHead = cCtx.createLinearGradient(0, 0, w, 200);
+            cyberHead.addColorStop(0, primaryColor);
+            cyberHead.addColorStop(1, secondaryColor);
+            cCtx.fillStyle = cyberHead;
+            cCtx.beginPath();
+            cCtx.moveTo(0, 0);
+            cCtx.lineTo(w, 0);
+            cCtx.lineTo(w, 150);
+            cCtx.quadraticCurveTo(w / 2, 220, 0, 150);
+            cCtx.closePath();
+            cCtx.fill();
+
+            // Cyber Tech Grid Accent Lines
+            cCtx.strokeStyle = secondaryColor;
+            cCtx.lineWidth = 2;
+            cCtx.beginPath();
+            cCtx.moveTo(30, 240);
+            cCtx.lineTo(w - 30, 240);
+            cCtx.moveTo(30, 750);
+            cCtx.lineTo(w - 30, 750);
+            cCtx.stroke();
+
+            // Bottom Curved Metallic Frame
+            const cyberFoot = cCtx.createLinearGradient(0, h - 100, w, h);
+            cyberFoot.addColorStop(0, secondaryColor);
+            cyberFoot.addColorStop(1, primaryColor);
+            cCtx.fillStyle = cyberFoot;
+            cCtx.beginPath();
+            cCtx.moveTo(0, h - 70);
+            cCtx.quadraticCurveTo(w / 2, h - 20, w, h - 70);
+            cCtx.lineTo(w, h);
+            cCtx.lineTo(0, h);
+            cCtx.closePath();
+            cCtx.fill();
+
+            // Lanyard Slot Notch
+            cCtx.save();
+            cCtx.fillStyle = '#cbd5e1';
+            cCtx.beginPath();
+            cCtx.roundRect(w / 2 - 40, 10, 80, 14, 7);
+            cCtx.fill();
+            cCtx.restore();
+
+        } else {
+            // Variant A: Executive Header & Accent Bars (Default/Classic)
+            const headGrad = cCtx.createLinearGradient(0, 0, w, 220);
+            headGrad.addColorStop(0, primaryColor);
+            headGrad.addColorStop(1, secondaryColor);
+            cCtx.fillStyle = headGrad;
+            cCtx.beginPath();
+            cCtx.moveTo(0, 0);
+            cCtx.lineTo(w, 0);
+            cCtx.lineTo(w, 180);
+            cCtx.quadraticCurveTo(w / 2, 230, 0, 180);
+            cCtx.closePath();
+            cCtx.fill();
+
+            cCtx.save();
+            cCtx.fillStyle = '#334155';
+            cCtx.beginPath();
+            cCtx.roundRect(w / 2 - 40, 12, 80, 14, 7);
+            cCtx.fill();
+            cCtx.restore();
+
+            const footGrad = cCtx.createLinearGradient(0, h - 80, w, h);
+            footGrad.addColorStop(0, secondaryColor);
+            footGrad.addColorStop(1, '#0f172a');
+            cCtx.fillStyle = footGrad;
+            cCtx.beginPath();
+            cCtx.moveTo(0, h - 50);
+            cCtx.quadraticCurveTo(w / 2, h - 90, w, h - 50);
+            cCtx.lineTo(w, h);
+            cCtx.lineTo(0, h);
+            cCtx.closePath();
+            cCtx.fill();
+        }
+
     } else {
-        cCtx.fillStyle = '#f8fafc';
+        // Back View
+        cCtx.fillStyle = (selectedBgVariant === 'variant_d') ? '#0f172a' : '#f8fafc';
         cCtx.fillRect(0, 0, w, h);
 
         cCtx.fillStyle = '#0f172a';
@@ -795,27 +980,126 @@ function renderIDCardBackground(cCtx, side, w, h) {
 
 function renderBusinessCardBackground(cCtx, side, w, h) {
     if (side === 'front') {
-        cCtx.fillStyle = '#ffffff';
+        const isDarkTheme = (selectedBgVariant === 'variant_d');
+        cCtx.fillStyle = isDarkTheme ? '#090d16' : '#ffffff';
         cCtx.fillRect(0, 0, w, h);
 
-        const barGrad = cCtx.createLinearGradient(0, 0, 0, h);
-        barGrad.addColorStop(0, secondaryColor);
-        barGrad.addColorStop(1, primaryColor);
-        cCtx.fillStyle = barGrad;
-        cCtx.fillRect(0, 0, 24, h);
+        if (selectedBgVariant === 'variant_b') {
+            // Variant B: Wavy Fluid Curves & Layers
+            const waveGrad1 = cCtx.createLinearGradient(w * 0.3, 0, w, h);
+            waveGrad1.addColorStop(0, secondaryColor);
+            waveGrad1.addColorStop(1, '#38bdf8');
+            cCtx.fillStyle = waveGrad1;
+            cCtx.beginPath();
+            cCtx.moveTo(w * 0.45, 0);
+            cCtx.bezierCurveTo(w * 0.65, h * 0.6, w * 0.85, 0, w, h * 0.7);
+            cCtx.lineTo(w, 0);
+            cCtx.closePath();
+            cCtx.fill();
 
-        const geomGrad = cCtx.createLinearGradient(w - 300, 0, w, h);
-        geomGrad.addColorStop(0, primaryColor);
-        geomGrad.addColorStop(1, '#1e293b');
-        cCtx.fillStyle = geomGrad;
-        cCtx.beginPath();
-        cCtx.moveTo(w - 200, 0);
-        cCtx.lineTo(w, 0);
-        cCtx.lineTo(w, h);
-        cCtx.lineTo(w - 350, h);
-        cCtx.closePath();
-        cCtx.fill();
+            const waveGrad2 = cCtx.createLinearGradient(0, h * 0.3, w, h);
+            waveGrad2.addColorStop(0, primaryColor);
+            waveGrad2.addColorStop(1, secondaryColor);
+            cCtx.fillStyle = waveGrad2;
+            cCtx.beginPath();
+            cCtx.moveTo(0, h * 0.5);
+            cCtx.bezierCurveTo(w * 0.35, h * 0.85, w * 0.7, h * 0.25, w, h * 0.85);
+            cCtx.lineTo(w, h);
+            cCtx.lineTo(0, h);
+            cCtx.closePath();
+            cCtx.fill();
+
+            cCtx.strokeStyle = '#ffffff';
+            cCtx.lineWidth = 5;
+            cCtx.beginPath();
+            cCtx.moveTo(0, h * 0.5);
+            cCtx.bezierCurveTo(w * 0.35, h * 0.85, w * 0.7, h * 0.25, w, h * 0.85);
+            cCtx.stroke();
+
+        } else if (selectedBgVariant === 'variant_c') {
+            // Variant C: Modern Diagonal Slant & Corner Polygon Stripes
+            const slant1 = cCtx.createLinearGradient(0, 0, w * 0.5, h);
+            slant1.addColorStop(0, primaryColor);
+            slant1.addColorStop(1, secondaryColor);
+            cCtx.fillStyle = slant1;
+            cCtx.beginPath();
+            cCtx.moveTo(0, 0);
+            cCtx.lineTo(w * 0.5, 0);
+            cCtx.lineTo(0, h * 0.85);
+            cCtx.closePath();
+            cCtx.fill();
+
+            cCtx.fillStyle = secondaryColor;
+            cCtx.beginPath();
+            cCtx.moveTo(w * 0.52, 0);
+            cCtx.lineTo(w * 0.57, 0);
+            cCtx.lineTo(0, h * 0.97);
+            cCtx.lineTo(0, h * 0.88);
+            cCtx.closePath();
+            cCtx.fill();
+
+            const slant2 = cCtx.createLinearGradient(w * 0.5, h * 0.3, w, h);
+            slant2.addColorStop(0, secondaryColor);
+            slant2.addColorStop(1, primaryColor);
+            cCtx.fillStyle = slant2;
+            cCtx.beginPath();
+            cCtx.moveTo(w * 0.6, h);
+            cCtx.lineTo(w, h * 0.35);
+            cCtx.lineTo(w, h);
+            cCtx.closePath();
+            cCtx.fill();
+
+        } else if (selectedBgVariant === 'variant_d') {
+            // Variant D: Minimal Curved Arcs & Cyber Line Frame
+            const arcGrad1 = cCtx.createLinearGradient(0, 0, 300, 300);
+            arcGrad1.addColorStop(0, primaryColor);
+            arcGrad1.addColorStop(1, secondaryColor);
+            cCtx.fillStyle = arcGrad1;
+            cCtx.beginPath();
+            cCtx.moveTo(0, 0);
+            cCtx.lineTo(260, 0);
+            cCtx.quadraticCurveTo(140, 140, 0, 260);
+            cCtx.closePath();
+            cCtx.fill();
+
+            const arcGrad2 = cCtx.createLinearGradient(w - 300, h - 300, w, h);
+            arcGrad2.addColorStop(0, secondaryColor);
+            arcGrad2.addColorStop(1, primaryColor);
+            cCtx.fillStyle = arcGrad2;
+            cCtx.beginPath();
+            cCtx.moveTo(w, h);
+            cCtx.lineTo(w - 280, h);
+            cCtx.quadraticCurveTo(w - 140, h - 140, w, h - 280);
+            cCtx.closePath();
+            cCtx.fill();
+
+            cCtx.strokeStyle = secondaryColor;
+            cCtx.lineWidth = 2;
+            cCtx.strokeRect(20, 20, w - 40, h - 40);
+
+        } else {
+            // Variant A: Executive Geometric Split (Default)
+            const barGrad = cCtx.createLinearGradient(0, 0, 0, h);
+            barGrad.addColorStop(0, secondaryColor);
+            barGrad.addColorStop(1, primaryColor);
+            cCtx.fillStyle = barGrad;
+            cCtx.fillRect(0, 0, 24, h);
+
+            const geomGrad = cCtx.createLinearGradient(w - 300, 0, w, h);
+            geomGrad.addColorStop(0, primaryColor);
+            geomGrad.addColorStop(1, '#1e293b');
+            cCtx.fillStyle = geomGrad;
+            cCtx.beginPath();
+            cCtx.moveTo(w - 200, 0);
+            cCtx.lineTo(w, 0);
+            cCtx.lineTo(w, h);
+            cCtx.lineTo(w - 350, h);
+            cCtx.closePath();
+            cCtx.fill();
+        }
+
     } else {
+        // Back View
         const darkGrad = cCtx.createLinearGradient(0, 0, w, h);
         darkGrad.addColorStop(0, primaryColor);
         darkGrad.addColorStop(1, '#1e293b');
