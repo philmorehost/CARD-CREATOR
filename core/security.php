@@ -8,9 +8,17 @@ require_once __DIR__ . '/helpers.php';
 class SecurityEngine {
 
     /**
-     * Mailer helper using PHP mail() or configured SMTP settings
+     * Mailer helper using PHP mail() or configured SMTP settings with detailed status output
+     * Returns array ['success' => bool, 'error' => string]
      */
     public static function sendEmail($to, $subject, $message) {
+        if (is_demo_mode()) {
+            return [
+                'success' => false,
+                'error' => 'Email dispatch is disabled while running in Demo Mode.'
+            ];
+        }
+
         $siteTitle = get_setting('site_title', 'CARD-CREATOR');
         $smtpHost = get_setting('smtp_host', '');
         $smtpPort = intval(get_setting('smtp_port', '587'));
@@ -22,81 +30,140 @@ class SecurityEngine {
             try {
                 $host = ($smtpPort == 465 ? 'ssl://' : '') . $smtpHost;
                 $socket = @fsockopen($host, $smtpPort, $errno, $errstr, 10);
-                if ($socket) {
-                    $read = function() use ($socket) {
-                        $res = '';
-                        while ($str = fgets($socket, 515)) {
-                            $res .= $str;
-                            if (substr($str, 3, 1) == ' ') break;
-                        }
-                        return $res;
-                    };
-
-                    $write = function($cmd) use ($socket) {
-                        fputs($socket, $cmd . "\r\n");
-                    };
-
-                    $read(); // banner
-                    $write("EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
-                    $read();
-
-                    if ($smtpPort == 587) {
-                        $write("STARTTLS");
-                        $res = $read();
-                        if (substr($res, 0, 3) == '220') {
-                            stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT);
-                            $write("EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
-                            $read();
-                        }
-                    }
-
-                    if (!empty($smtpUser) && !empty($smtpPass)) {
-                        $write("AUTH LOGIN");
-                        $read();
-                        $write(base64_encode($smtpUser));
-                        $read();
-                        $write(base64_encode($smtpPass));
-                        $read();
-                    }
-
-                    $write("MAIL FROM: <{$fromEmail}>");
-                    $read();
-                    $write("RCPT TO: <{$to}>");
-                    $read();
-                    $write("DATA");
-                    $read();
-
-                    $headers = "MIME-Version: 1.0\r\n";
-                    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-                    $headers .= "From: {$siteTitle} <{$fromEmail}>\r\n";
-                    $headers .= "To: <{$to}>\r\n";
-                    $headers .= "Subject: {$subject}\r\n";
-
-                    $write($headers . "\r\n" . $message . "\r\n.");
-                    $read();
-                    $write("QUIT");
-                    fclose($socket);
-                    return true;
+                if (!$socket) {
+                    return [
+                        'success' => false,
+                        'error' => "Failed to connect to SMTP host {$smtpHost}:{$smtpPort} - ({$errno}) {$errstr}"
+                    ];
                 }
+
+                stream_set_timeout($socket, 10);
+
+                $read = function() use ($socket) {
+                    $res = '';
+                    while ($str = fgets($socket, 515)) {
+                        $res .= $str;
+                        if (substr($str, 3, 1) == ' ') break;
+                    }
+                    return $res;
+                };
+
+                $write = function($cmd) use ($socket) {
+                    fputs($socket, $cmd . "\r\n");
+                };
+
+                $response = $read(); // Banner
+                if (substr($response, 0, 3) != '220') {
+                    fclose($socket);
+                    return ['success' => false, 'error' => 'SMTP greeting failed: ' . trim($response)];
+                }
+
+                $write("EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+                $response = $read();
+
+                if ($smtpPort == 587) {
+                    $write("STARTTLS");
+                    $res = $read();
+                    if (substr($res, 0, 3) == '220') {
+                        $crypto = stream_socket_enable_crypto(
+                            $socket,
+                            true,
+                            STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT
+                        );
+                        if (!$crypto) {
+                            fclose($socket);
+                            return ['success' => false, 'error' => 'TLS encryption handshake failed on port 587.'];
+                        }
+                        $write("EHLO " . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+                        $read();
+                    } else {
+                        fclose($socket);
+                        return ['success' => false, 'error' => 'SMTP server refused STARTTLS: ' . trim($res)];
+                    }
+                }
+
+                if (!empty($smtpUser) && !empty($smtpPass)) {
+                    $write("AUTH LOGIN");
+                    $res = $read();
+                    if (substr($res, 0, 3) != '334') {
+                        fclose($socket);
+                        return ['success' => false, 'error' => 'AUTH LOGIN not accepted: ' . trim($res)];
+                    }
+
+                    $write(base64_encode($smtpUser));
+                    $res = $read();
+                    if (substr($res, 0, 3) != '334') {
+                        fclose($socket);
+                        return ['success' => false, 'error' => 'SMTP Username rejected: ' . trim($res)];
+                    }
+
+                    $write(base64_encode($smtpPass));
+                    $res = $read();
+                    if (substr($res, 0, 3) != '235') {
+                        fclose($socket);
+                        return ['success' => false, 'error' => 'SMTP Authentication failed: ' . trim($res)];
+                    }
+                }
+
+                $write("MAIL FROM: <{$fromEmail}>");
+                $res = $read();
+                if (substr($res, 0, 3) != '250') {
+                    fclose($socket);
+                    return ['success' => false, 'error' => 'Sender address rejected: ' . trim($res)];
+                }
+
+                $write("RCPT TO: <{$to}>");
+                $res = $read();
+                if (substr($res, 0, 3) != '250' && substr($res, 0, 3) != '251') {
+                    fclose($socket);
+                    return ['success' => false, 'error' => 'Recipient address rejected: ' . trim($res)];
+                }
+
+                $write("DATA");
+                $res = $read();
+                if (substr($res, 0, 3) != '354') {
+                    fclose($socket);
+                    return ['success' => false, 'error' => 'DATA command rejected: ' . trim($res)];
+                }
+
+                $headers = "MIME-Version: 1.0\r\n";
+                $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+                $headers .= "From: {$siteTitle} <{$fromEmail}>\r\n";
+                $headers .= "To: <{$to}>\r\n";
+                $headers .= "Subject: {$subject}\r\n";
+
+                $write($headers . "\r\n" . $message . "\r\n.");
+                $res = $read();
+
+                $write("QUIT");
+                fclose($socket);
+
+                if (substr($res, 0, 3) == '250') {
+                    return ['success' => true, 'error' => ''];
+                } else {
+                    return ['success' => false, 'error' => 'SMTP server error on message delivery: ' . trim($res)];
+                }
+
             } catch (\Exception $ex) {
                 error_log("SMTP Error: " . $ex->getMessage());
+                return ['success' => false, 'error' => 'SMTP Exception: ' . $ex->getMessage()];
             }
         }
 
-        // Fallback to PHP mail() if SMTP is not configured or failed
+        // Native PHP mail() fallback
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         $headers .= "From: {$siteTitle} Security <{$fromEmail}>\r\n";
 
-        $logDir = __DIR__ . '/../logs/';
-        if (!is_dir($logDir)) {
-            @mkdir($logDir, 0777, true);
+        $mailSent = @mail($to, $subject, $message, $headers);
+        if ($mailSent) {
+            return ['success' => true, 'error' => ''];
+        } else {
+            return [
+                'success' => false,
+                'error' => 'Native PHP mail() failed to send message. Please configure valid SMTP settings in the Admin Panel.'
+            ];
         }
-        $logEntry = "[" . date('Y-m-d H:i:s') . "] TO: {$to} | SUBJECT: {$subject} | METHOD: Native mail() Fallback\n";
-        @file_put_contents($logDir . 'email.log', $logEntry, FILE_APPEND);
-
-        @mail($to, $subject, $message, $headers);
-        return true;
     }
 
     /**
@@ -275,13 +342,18 @@ class SecurityEngine {
 
     public static function generateAndSendOTP($email) {
         $pdo = get_db_connection();
-        if (!$pdo) return false;
+        if (!$pdo) {
+            return ['status' => false, 'message' => 'Database connection unavailable.'];
+        }
 
         $stmt = $pdo->prepare("SELECT id, username FROM users WHERE email = :e");
         $stmt->execute(['e' => $email]);
         $user = $stmt->fetch();
 
-        if (!$user) return false;
+        if (!$user) {
+            // Generic message for security, or explicit feedback if account not found
+            return ['status' => false, 'message' => 'No account registered with that email address.'];
+        }
 
         $otp = sprintf("%06d", mt_rand(100000, 999999));
         $expires = date('Y-m-d H:i:s', strtotime('+15 minutes'));
@@ -290,9 +362,20 @@ class SecurityEngine {
         $stmtUpd->execute(['o' => $otp, 'ex' => $expires, 'id' => $user['id']]);
 
         $subject = "Your Account Recovery OTP - CARD-CREATOR";
-        $msg = "<p>Hello " . htmlspecialchars($user['username']) . ",</p><p>Your One-Time Password (OTP) for account unblocking and password reset is: <strong>{$otp}</strong></p>";
+        $msg = "<p>Hello " . htmlspecialchars($user['username']) . ",</p><p>Your One-Time Password (OTP) for account unblocking and password reset is: <strong style='font-size:20px;letter-spacing:2px;color:#2563eb;'>{$otp}</strong></p><p>This OTP expires in 15 minutes.</p>";
 
-        return self::sendEmail($email, $subject, $msg);
+        $mailRes = self::sendEmail($email, $subject, $msg);
+        if ($mailRes['success']) {
+            return [
+                'status' => true,
+                'message' => 'An OTP code has been dispatched to your email address (' . htmlspecialchars($email) . ').'
+            ];
+        } else {
+            return [
+                'status' => false,
+                'message' => 'Failed to send OTP email: ' . $mailRes['error']
+            ];
+        }
     }
 
     public static function verifyOTPAndUnlock($email, $otp, $newPassword) {

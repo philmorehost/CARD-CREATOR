@@ -75,9 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim($_POST['email'] ?? '');
         if (empty($email)) {
             $error = 'Please enter your registered email address.';
+            $showOtpForm = true;
         } else {
-            SecurityEngine::generateAndSendOTP($email);
-            $success = 'If the email matches an account, an OTP code has been dispatched to your email.';
+            $otpRes = SecurityEngine::generateAndSendOTP($email);
+            if ($otpRes['status']) {
+                $success = $otpRes['message'];
+            } else {
+                $error = $otpRes['message'];
+            }
             $showOtpForm = true;
         }
     } elseif ($action === 'verify_otp') {

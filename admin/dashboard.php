@@ -52,7 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'System is currently running in DEMO MODE. Changes are disabled.';
             $messageType = 'error';
         } else {
-            if ($action === 'save_settings') {
+            if ($action === 'test_smtp') {
+                $recipient = trim($_POST['test_email'] ?? $currentAdmin['email'] ?? 'admin@example.com');
+                if (empty($recipient)) $recipient = 'admin@example.com';
+                $res = SecurityEngine::sendEmail($recipient, "SMTP Configuration Test - CARD-CREATOR", "<p>Hello Admin,</p><p>This is a test email sent from <strong>" . htmlspecialchars(get_setting('site_title', 'CARD-CREATOR')) . "</strong> to verify your SMTP settings.</p><p>If you received this message, your SMTP email delivery configuration is working correctly!</p>");
+                json_response($res['success'] ? 'success' : 'error', $res['success'] ? 'SMTP Test Email Sent Successfully to ' . htmlspecialchars($recipient) : $res['error']);
+            } elseif ($action === 'save_settings') {
                 $settingsKeys = [
                     'site_title', 'demo_mode', 'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass',
                     'security_user_protection', 'security_ip_protection', 'security_brute_period_mins',
@@ -664,33 +669,89 @@ $demoMode = get_setting('demo_mode', '0') === '1';
         </div>
     </div>
 
-    <!-- TAB 5: ADMIN PROFILE SETTINGS -->
+    <!-- TAB 5: ADMIN PROFILE & SMTP SETTINGS -->
     <div id="tab-profile" class="tab-content hidden space-y-6">
-        <form method="POST" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 max-w-xl">
-            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
-            <input type="hidden" name="action" value="update_admin_profile">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            <h2 class="text-base font-bold text-white border-b border-slate-800 pb-3">Update Admin Profile Details</h2>
+            <!-- Admin Profile Form -->
+            <form method="POST" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+                <input type="hidden" name="action" value="update_admin_profile">
 
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Admin Username</label>
-                <input type="text" name="username" value="<?= htmlspecialchars($currentAdmin['username'] ?? '') ?>" required class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
-            </div>
+                <h2 class="text-base font-bold text-white border-b border-slate-800 pb-3 flex items-center space-x-2">
+                    <span>⚙ Admin Profile Details</span>
+                </h2>
 
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Admin Email Address</label>
-                <input type="email" name="email" value="<?= htmlspecialchars($currentAdmin['email'] ?? '') ?>" required class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
-            </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Admin Username</label>
+                    <input type="text" name="username" value="<?= htmlspecialchars($currentAdmin['username'] ?? '') ?>" required class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
+                </div>
 
-            <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">New Password (leave blank to keep current)</label>
-                <input type="password" name="password" placeholder="••••••••" class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
-            </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Admin Email Address</label>
+                    <input type="email" name="email" value="<?= htmlspecialchars($currentAdmin['email'] ?? '') ?>" required class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
+                </div>
 
-            <button type="submit" class="py-3 px-6 bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white rounded-xl shadow">
-                Save Profile Changes
-            </button>
-        </form>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">New Password (leave blank to keep current)</label>
+                    <input type="password" name="password" placeholder="••••••••" class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
+                </div>
+
+                <button type="submit" class="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white rounded-xl shadow transition">
+                    Save Profile Changes
+                </button>
+            </form>
+
+            <!-- SMTP & System Settings Form -->
+            <form method="POST" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <input type="hidden" name="csrf_token" id="smtp_csrf_token" value="<?= generate_csrf_token() ?>">
+                <input type="hidden" name="action" value="save_settings">
+
+                <h2 class="text-base font-bold text-white border-b border-slate-800 pb-3 flex items-center justify-between">
+                    <span>📧 System & SMTP Server Configuration</span>
+                    <?php if (is_demo_mode()): ?>
+                        <span class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-bold border border-amber-500/30">DEMO MODE ON</span>
+                    <?php endif; ?>
+                </h2>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Application Title</label>
+                    <input type="text" name="site_title" value="<?= htmlspecialchars(get_setting('site_title', 'CARD-CREATOR')) ?>" required class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">SMTP Hostname / Server</label>
+                        <input type="text" name="smtp_host" id="smtp_host_input" value="<?= htmlspecialchars(get_setting('smtp_host', '')) ?>" placeholder="smtp.gmail.com" class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Port</label>
+                        <input type="number" name="smtp_port" id="smtp_port_input" value="<?= htmlspecialchars(get_setting('smtp_port', '587')) ?>" placeholder="587" class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">SMTP Username / Email</label>
+                    <input type="text" name="smtp_user" id="smtp_user_input" value="<?= htmlspecialchars(get_setting('smtp_user', '')) ?>" placeholder="user@example.com" class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">SMTP Password</label>
+                    <input type="password" name="smtp_pass" id="smtp_pass_input" value="<?= htmlspecialchars(get_setting('smtp_pass', '')) ?>" placeholder="••••••••" class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs">
+                </div>
+
+                <div class="pt-2 flex flex-col sm:flex-row gap-2">
+                    <button type="submit" class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-500 font-bold text-xs text-white rounded-xl shadow transition">
+                        Save SMTP Settings
+                    </button>
+                    <button type="button" onclick="testSMTP()" class="py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 font-bold text-xs text-slate-200 rounded-xl transition flex items-center justify-center space-x-1.5">
+                        <span>🧪 Send Test Email</span>
+                    </button>
+                </div>
+                <div id="smtpTestResult" class="hidden text-xs p-3 rounded-xl"></div>
+            </form>
+
+        </div>
     </div>
 
     <!-- TAB 6: ACTIVITY LOGS -->
@@ -934,6 +995,38 @@ function exportCSVData() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+function testSMTP() {
+    const resBox = document.getElementById('smtpTestResult');
+    const csrfToken = document.getElementById('smtp_csrf_token').value;
+
+    resBox.className = 'text-xs p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-bold';
+    resBox.innerHTML = '⏳ Testing SMTP Connection & Dispatching Test Message...';
+    resBox.classList.remove('hidden');
+
+    const formData = new FormData();
+    formData.append('csrf_token', csrfToken);
+    formData.append('action', 'test_smtp');
+
+    fetch('dashboard.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            resBox.className = 'text-xs p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold';
+            resBox.innerHTML = '✅ ' + data.message;
+        } else {
+            resBox.className = 'text-xs p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold';
+            resBox.innerHTML = '❌ ' + data.message;
+        }
+    })
+    .catch(err => {
+        resBox.className = 'text-xs p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold';
+        resBox.innerHTML = '❌ Request failed: ' + err.message;
+    });
 }
 </script>
 

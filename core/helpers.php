@@ -84,8 +84,11 @@ function get_db_connection(&$errorMsg = null) {
 /**
  * Fetch system setting from database
  */
-function get_setting($key, $default = '') {
+function get_setting($key, $default = '', $resetCache = false) {
     static $settings = null;
+    if ($resetCache) {
+        $settings = null;
+    }
 
     $pdo = get_db_connection();
     if (!$pdo) {
@@ -114,12 +117,16 @@ function set_setting($key, $value) {
     $pdo = get_db_connection();
     if (!$pdo) return false;
 
-    if (is_demo_mode()) {
+    if (is_demo_mode() && !($key === 'demo_mode' && $value === '0')) {
         return false;
     }
 
     $stmt = $pdo->prepare("REPLACE INTO settings (setting_key, setting_value) VALUES (:key, :val)");
-    return $stmt->execute(['key' => $key, 'val' => $value]);
+    $res = $stmt->execute(['key' => $key, 'val' => $value]);
+    if ($res) {
+        get_setting($key, '', true); // Invalidate static cache
+    }
+    return $res;
 }
 
 /**
