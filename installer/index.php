@@ -93,12 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             } else {
                 // SQLite engine
-                $dbFile = __DIR__ . '/../card_creator.sqlite';
+                $dbFile = dirname(__DIR__) . '/card_creator.sqlite';
                 $pdo = new PDO("sqlite:" . $dbFile);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
                 // Import Schema for SQLite
-                $schemaFile = __DIR__ . '/../schema.sql';
+                $schemaFile = dirname(__DIR__) . '/schema.sql';
                 if (file_exists($schemaFile)) {
                     $sql = file_get_contents($schemaFile);
                     $sql = str_replace('INT AUTO_INCREMENT PRIMARY KEY', 'INTEGER PRIMARY KEY AUTOINCREMENT', $sql);
@@ -110,10 +110,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                // Save SQLite database config
+                // Save SQLite database config with relative path code
                 $configContent = "<?php\nreturn " . var_export([
                     'driver' => 'sqlite',
-                    'db_path' => $dbFile,
+                    'db_path' => dirname(__DIR__) . '/card_creator.sqlite',
                     'host' => $host,
                     'port' => $port,
                     'db_name' => $dbName,

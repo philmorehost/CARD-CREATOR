@@ -189,9 +189,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch current user & data
-$currentAdminStmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
-$currentAdminStmt->execute(['id' => $_SESSION['user_id']]);
-$currentAdmin = $currentAdminStmt->fetch();
+$currentAdmin = null;
+if ($pdo) {
+    $currentAdminStmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+    $currentAdminStmt->execute(['id' => $_SESSION['user_id']]);
+    $currentAdmin = $currentAdminStmt->fetch();
+}
 
 $loginLogs = $pdo ? $pdo->query("SELECT * FROM login_logs ORDER BY created_at DESC LIMIT 50")->fetchAll() : [];
 $cardHistory = $pdo ? $pdo->query("SELECT h.*, u.username FROM card_history h LEFT JOIN users u ON h.user_id = u.id ORDER BY h.id DESC LIMIT 50")->fetchAll() : [];

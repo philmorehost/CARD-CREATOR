@@ -22,7 +22,17 @@ function get_db_connection(&$errorMsg = null) {
 
     try {
         if (($config['driver'] ?? 'mysql') === 'sqlite') {
-            $dbPath = $config['db_path'] ?? (__DIR__ . '/../card_creator.sqlite');
+            $defaultDbPath = dirname(__DIR__) . '/card_creator.sqlite';
+            $configuredPath = $config['db_path'] ?? '';
+
+            if (!empty($configuredPath) && file_exists($configuredPath) && is_writable($configuredPath)) {
+                $dbPath = $configuredPath;
+            } elseif (!empty($configuredPath) && file_exists(dirname($configuredPath)) && is_writable(dirname($configuredPath))) {
+                $dbPath = $configuredPath;
+            } else {
+                $dbPath = $defaultDbPath;
+            }
+
             $pdo = new PDO("sqlite:" . $dbPath);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);

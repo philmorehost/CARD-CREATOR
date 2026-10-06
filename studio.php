@@ -34,24 +34,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $profileMsg = 'Email address cannot be empty.';
             $profileMsgType = 'error';
         } else {
-            if (!empty($newPassword)) {
-                $hash = password_hash($newPassword, PASSWORD_BCRYPT);
-                $stmt = $pdo->prepare("UPDATE users SET email = :e, password_hash = :p WHERE id = :id");
-                $stmt->execute(['e' => $newEmail, 'p' => $hash, 'id' => $userId]);
+            if ($pdo) {
+                if (!empty($newPassword)) {
+                    $hash = password_hash($newPassword, PASSWORD_BCRYPT);
+                    $stmt = $pdo->prepare("UPDATE users SET email = :e, password_hash = :p WHERE id = :id");
+                    $stmt->execute(['e' => $newEmail, 'p' => $hash, 'id' => $userId]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE users SET email = :e WHERE id = :id");
+                    $stmt->execute(['e' => $newEmail, 'id' => $userId]);
+                }
+                $profileMsg = 'Profile updated successfully!';
+                $profileMsgType = 'success';
             } else {
-                $stmt = $pdo->prepare("UPDATE users SET email = :e WHERE id = :id");
-                $stmt->execute(['e' => $newEmail, 'id' => $userId]);
+                $profileMsg = 'Database unavailable.';
+                $profileMsgType = 'error';
             }
-            $profileMsg = 'Profile updated successfully!';
-            $profileMsgType = 'success';
         }
     }
 }
 
 // Fetch user info for profile modal
-$currentUserStmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
-$currentUserStmt->execute(['id' => $userId]);
-$currentUser = $currentUserStmt->fetch();
+$currentUser = [];
+if ($pdo) {
+    $currentUserStmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+    if ($currentUserStmt) {
+        $currentUserStmt->execute(['id' => $userId]);
+        $currentUser = $currentUserStmt->fetch() ?: [];
+    }
+}
 
 // 8 Premium Seed Templates
 $templates = [

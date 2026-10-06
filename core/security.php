@@ -236,8 +236,13 @@ class SecurityEngine {
                 if ($duration === 'one_month') $blockedUntil = date('Y-m-d H:i:s', strtotime('+1 month'));
                 if ($duration === 'one_year') $blockedUntil = date('Y-m-d H:i:s', strtotime('+1 year'));
 
-                $stmtBlock = $pdo->prepare("INSERT INTO ip_blocks (ip_address, reason, blocked_until, created_at) VALUES (:ip, 'Automated IP Brute Force Protection Triggered', :bu, :ca)");
-                $stmtBlock->execute(['ip' => $ip, 'bu' => $blockedUntil, 'ca' => date('Y-m-d H:i:s')]);
+                try {
+                    $stmtBlock = $pdo->prepare("INSERT INTO ip_blocks (ip_address, reason, blocked_until, created_at) VALUES (:ip, 'Automated IP Brute Force Protection Triggered', :bu, :ca)");
+                    $stmtBlock->execute(['ip' => $ip, 'bu' => $blockedUntil, 'ca' => date('Y-m-d H:i:s')]);
+                } catch (\Exception $e) {
+                    $stmtBlock = $pdo->prepare("UPDATE ip_blocks SET blocked_until = :bu, reason = 'Automated IP Brute Force Protection Triggered' WHERE ip_address = :ip");
+                    $stmtBlock->execute(['ip' => $ip, 'bu' => $blockedUntil]);
+                }
 
                 if (get_setting('security_notify_bruteforce', '1') === '1') {
                     $adminEmail = get_setting('admin_email', 'admin@example.com');
