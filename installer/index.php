@@ -219,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /**
- * Seed premium sample templates from card-sample
+ * Seed premium sample templates with clean vector designs and rich field types
  */
 function seed_default_templates($pdo) {
     try {
@@ -231,19 +231,24 @@ function seed_default_templates($pdo) {
 
     $samples = [
         [
-            'title' => 'Corporate Identity ID Card',
+            'title' => 'Corporate Premium ID Card',
             'type' => 'id_card',
             'orientation' => 'portrait',
             'width_px' => 600,
             'height_px' => 960,
-            'front_bg' => 'card-sample/corporate-id-card-template-scaled.jpg',
-            'back_bg' => 'card-sample/modern-office-id-card-design-template-corporate-identity-card-design-vectoe_599186-631.avif',
+            'front_bg' => 'vector_corporate_front',
+            'back_bg' => 'vector_corporate_back',
             'fields' => json_encode([
-                ['id' => 'name', 'label' => 'Full Name', 'type' => 'text', 'default' => 'ALEX JOHNSON', 'x' => 50, 'y' => 450, 'font' => 'Inter', 'size' => 28, 'color' => '#1e293b', 'align' => 'center', 'bold' => true],
-                ['id' => 'role', 'label' => 'Job Title / Role', 'type' => 'text', 'default' => 'SENIOR SOFTWARE ENGINEER', 'x' => 50, 'y' => 495, 'font' => 'Inter', 'size' => 16, 'color' => '#3b82f6', 'align' => 'center', 'bold' => true],
-                ['id' => 'id_no', 'label' => 'ID Number', 'type' => 'text', 'default' => 'ID NO: EMP-89210', 'x' => 50, 'y' => 540, 'font' => 'Inter', 'size' => 16, 'color' => '#475569', 'align' => 'center', 'bold' => false],
-                ['id' => 'dept', 'label' => 'Department', 'type' => 'text', 'default' => 'DEPT: INNOVATION & TECH', 'x' => 50, 'y' => 575, 'font' => 'Inter', 'size' => 16, 'color' => '#475569', 'align' => 'center', 'bold' => false],
-                ['id' => 'photo', 'label' => 'Member Photo', 'type' => 'image', 'x' => 50, 'y' => 260, 'width' => 180, 'height' => 220, 'shape' => 'round']
+                ['id' => 'photo', 'label' => 'Member Photo', 'type' => 'file', 'x' => 200, 'y' => 180, 'width' => 200, 'height' => 240, 'shape' => 'round', 'side' => 'front'],
+                ['id' => 'name', 'label' => 'Full Name', 'type' => 'text', 'default' => 'ALEXANDER PIERCE', 'x' => 300, 'y' => 470, 'font' => 'Inter', 'size' => 26, 'color' => '#0f172a', 'align' => 'center', 'bold' => true, 'side' => 'front'],
+                ['id' => 'role', 'label' => 'Job Title / Role', 'type' => 'select', 'default' => 'Senior Tech Director', 'options' => 'Senior Tech Director,Lead Software Engineer,Product Manager,UI/UX Designer', 'x' => 300, 'y' => 510, 'font' => 'Inter', 'size' => 16, 'color' => '#2563eb', 'align' => 'center', 'bold' => true, 'side' => 'front'],
+                ['id' => 'id_no', 'label' => 'ID Badge Number', 'type' => 'number', 'default' => '89210', 'prefix' => 'ID NO: EMP-', 'x' => 300, 'y' => 550, 'font' => 'Inter', 'size' => 15, 'color' => '#475569', 'align' => 'center', 'bold' => false, 'side' => 'front'],
+                ['id' => 'dept', 'label' => 'Department', 'type' => 'radio', 'default' => 'Engineering', 'options' => 'Engineering,Design,Marketing,Management', 'x' => 300, 'y' => 585, 'font' => 'Inter', 'size' => 15, 'color' => '#475569', 'align' => 'center', 'bold' => false, 'side' => 'front'],
+                ['id' => 'issue_date', 'label' => 'Issue Date', 'type' => 'date', 'default' => date('Y-m-d'), 'prefix' => 'Issued: ', 'x' => 300, 'y' => 620, 'font' => 'Inter', 'size' => 14, 'color' => '#64748b', 'align' => 'center', 'bold' => false, 'side' => 'front'],
+                ['id' => 'verified', 'label' => 'Security Verified', 'type' => 'checkbox', 'default' => '1', 'check_label' => 'OFFICIALLY VERIFIED MEMBER', 'x' => 300, 'y' => 660, 'font' => 'Inter', 'size' => 14, 'color' => '#059669', 'align' => 'center', 'bold' => true, 'side' => 'front'],
+                ['id' => 'address', 'label' => 'Office Address & Notes', 'type' => 'textarea', 'default' => "Headquarters: 500 Technology Way\nSuite 400, Innovation District\nSan Francisco, CA 94105", 'x' => 300, 'y' => 320, 'font' => 'Inter', 'size' => 15, 'color' => '#1e293b', 'align' => 'center', 'bold' => false, 'side' => 'back'],
+                ['id' => 'emergency_tel', 'label' => 'Emergency Contact Tel', 'type' => 'tel', 'default' => '+1 (555) 019-2834', 'prefix' => 'Emergency: ', 'x' => 300, 'y' => 450, 'font' => 'Inter', 'size' => 15, 'color' => '#dc2626', 'align' => 'center', 'bold' => true, 'side' => 'back'],
+                ['id' => 'contact_email', 'label' => 'Official Contact Email', 'type' => 'email', 'default' => 'alex.pierce@corp-domain.com', 'prefix' => 'Email: ', 'x' => 300, 'y' => 490, 'font' => 'Inter', 'size' => 15, 'color' => '#2563eb', 'align' => 'center', 'bold' => false, 'side' => 'back']
             ])
         ],
         [
@@ -252,14 +257,17 @@ function seed_default_templates($pdo) {
             'orientation' => 'landscape',
             'width_px' => 1050,
             'height_px' => 600,
-            'front_bg' => 'card-sample/business-card-template_1435-1940.avif',
-            'back_bg' => 'card-sample/elegant-business-card-template-abstract-260nw-2271231581.webp',
+            'front_bg' => 'vector_business_front',
+            'back_bg' => 'vector_business_back',
             'fields' => json_encode([
-                ['id' => 'name', 'label' => 'Full Name', 'type' => 'text', 'default' => 'SARAH CONNOR', 'x' => 100, 'y' => 200, 'font' => 'Inter', 'size' => 32, 'color' => '#0f172a', 'align' => 'left', 'bold' => true],
-                ['id' => 'role', 'label' => 'Job Title', 'type' => 'text', 'default' => 'CHIEF EXECUTIVE OFFICER', 'x' => 100, 'y' => 245, 'font' => 'Inter', 'size' => 16, 'color' => '#2563eb', 'align' => 'left', 'bold' => true],
-                ['id' => 'phone', 'label' => 'Phone', 'type' => 'text', 'default' => '+1 (555) 019-2834', 'x' => 100, 'y' => 330, 'font' => 'Inter', 'size' => 16, 'color' => '#334155', 'align' => 'left', 'bold' => false],
-                ['id' => 'email', 'label' => 'Email Address', 'type' => 'text', 'default' => 'sarah@company.com', 'x' => 100, 'y' => 370, 'font' => 'Inter', 'size' => 16, 'color' => '#334155', 'align' => 'left', 'bold' => false],
-                ['id' => 'company', 'label' => 'Company Name', 'type' => 'text', 'default' => 'APEX GLOBAL MEDIA', 'x' => 100, 'y' => 130, 'font' => 'Inter', 'size' => 22, 'color' => '#1e293b', 'align' => 'left', 'bold' => true]
+                ['id' => 'logo', 'label' => 'Company Logo / Badge', 'type' => 'file', 'x' => 80, 'y' => 80, 'width' => 140, 'height' => 100, 'shape' => 'rect', 'side' => 'front'],
+                ['id' => 'company', 'label' => 'Company Name', 'type' => 'text', 'default' => 'APEX INNOVATIONS INC.', 'x' => 240, 'y' => 135, 'font' => 'Inter', 'size' => 26, 'color' => '#0f172a', 'align' => 'left', 'bold' => true, 'side' => 'front'],
+                ['id' => 'name', 'label' => 'Full Name', 'type' => 'text', 'default' => 'SARAH CONNOR', 'x' => 80, 'y' => 280, 'font' => 'Inter', 'size' => 34, 'color' => '#1e293b', 'align' => 'left', 'bold' => true, 'side' => 'front'],
+                ['id' => 'role', 'label' => 'Job Title', 'type' => 'select', 'default' => 'Chief Executive Officer', 'options' => 'Chief Executive Officer,Managing Director,VP of Operations,Marketing Lead', 'x' => 80, 'y' => 325, 'font' => 'Inter', 'size' => 18, 'color' => '#2563eb', 'align' => 'left', 'bold' => true, 'side' => 'front'],
+                ['id' => 'phone', 'label' => 'Direct Phone Number', 'type' => 'tel', 'default' => '+1 (555) 987-6543', 'prefix' => 'Mobile: ', 'x' => 80, 'y' => 410, 'font' => 'Inter', 'size' => 16, 'color' => '#334155', 'align' => 'left', 'bold' => false, 'side' => 'front'],
+                ['id' => 'email', 'label' => 'Email Address', 'type' => 'email', 'default' => 'sarah@apex-innovations.com', 'prefix' => 'Email: ', 'x' => 80, 'y' => 445, 'font' => 'Inter', 'size' => 16, 'color' => '#334155', 'align' => 'left', 'bold' => false, 'side' => 'front'],
+                ['id' => 'vip_member', 'label' => 'Executive Status', 'type' => 'checkbox', 'default' => '1', 'check_label' => 'VIP EXECUTIVE MEMBER', 'x' => 80, 'y' => 485, 'font' => 'Inter', 'size' => 15, 'color' => '#d97706', 'align' => 'left', 'bold' => true, 'side' => 'front'],
+                ['id' => 'services', 'label' => 'Services Provided', 'type' => 'textarea', 'default' => "• Strategic Enterprise Consulting\n• Digital Transformation & AI\n• Venture Capital Investment", 'x' => 525, 'y' => 240, 'font' => 'Inter', 'size' => 18, 'color' => '#f8fafc', 'align' => 'center', 'bold' => false, 'side' => 'back']
             ])
         ]
     ];
