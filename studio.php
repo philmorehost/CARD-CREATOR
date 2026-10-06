@@ -16,6 +16,42 @@ $siteTitle = get_setting('site_title', 'CARD-CREATOR');
 $userId = $_SESSION['user_id'];
 $username = $_SESSION['username'] ?? 'User';
 $userRole = $_SESSION['user_role'] ?? 'staff';
+$isImpersonating = isset($_SESSION['impersonator_id']);
+
+$profileMsg = '';
+$profileMsgType = '';
+
+// Handle Staff Profile Update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $profileMsg = 'Invalid security token.';
+        $profileMsgType = 'error';
+    } else {
+        $newEmail = trim($_POST['email'] ?? '');
+        $newPassword = $_POST['password'] ?? '';
+
+        if (empty($newEmail)) {
+            $profileMsg = 'Email address cannot be empty.';
+            $profileMsgType = 'error';
+        } else {
+            if (!empty($newPassword)) {
+                $hash = password_hash($newPassword, PASSWORD_BCRYPT);
+                $stmt = $pdo->prepare("UPDATE users SET email = :e, password_hash = :p WHERE id = :id");
+                $stmt->execute(['e' => $newEmail, 'p' => $hash, 'id' => $userId]);
+            } else {
+                $stmt = $pdo->prepare("UPDATE users SET email = :e WHERE id = :id");
+                $stmt->execute(['e' => $newEmail, 'id' => $userId]);
+            }
+            $profileMsg = 'Profile updated successfully!';
+            $profileMsgType = 'success';
+        }
+    }
+}
+
+// Fetch user info for profile modal
+$currentUserStmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+$currentUserStmt->execute(['id' => $userId]);
+$currentUser = $currentUserStmt->fetch();
 
 // 8 Premium Seed Templates
 $templates = [
@@ -214,14 +250,24 @@ $activeTemplate = $templates[0];
         </div>
     </div>
 
-    <div class="flex items-center space-x-4">
-        <span class="text-xs text-slate-300 font-medium">Logged in as <strong class="text-white"><?= htmlspecialchars($username) ?></strong> (<?= htmlspecialchars($userRole) ?>)</span>
+    <div class="flex items-center space-x-3">
+        <?php if ($isImpersonating): ?>
+            <a href="admin/dashboard.php?action=revert_impersonation" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow transition">
+                ↩ Return to Admin
+            </a>
+        <?php endif; ?>
+
+        <button onclick="openProfileModal()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-xl border border-slate-600 transition">
+            👤 My Profile
+        </button>
+
         <?php if ($userRole === 'admin'): ?>
-            <a href="admin/dashboard.php" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-xl border border-slate-600 transition">
+            <a href="admin/dashboard.php" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow transition">
                 Admin Console ⚙
             </a>
         <?php endif; ?>
-        <a href="admin/logout.php" class="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-semibold rounded-xl transition">Logout</a>
+
+        <a href="admin/logout.php" class="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-semibold rounded-xl transition">Logout</a>
     </div>
 </header>
 
@@ -323,6 +369,42 @@ $activeTemplate = $templates[0];
 
 </main>
 
+<!-- STAFF PROFILE MODAL -->
+<div id="profileModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <form method="POST" class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+        <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+        <input type="hidden" name="action" value="update_profile">
+
+        <h3 class="text-lg font-bold text-white border-b border-slate-700 pb-2">Update My Profile</h3>
+
+        <?php if ($profileMsg): ?>
+            <div class="p-3 rounded-xl text-xs font-bold <?= $profileMsgType === 'success' ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border border-red-500/30 text-red-400' ?>">
+                <?= htmlspecialchars($profileMsg) ?>
+            </div>
+        <?php endif; ?>
+
+        <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Username</label>
+            <input type="text" value="<?= htmlspecialchars($currentUser['username'] ?? '') ?>" disabled class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-slate-400 text-sm">
+        </div>
+
+        <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
+            <input type="email" name="email" value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">New Password (leave blank to keep current)</label>
+            <input type="password" name="password" placeholder="••••••••" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-3 border-t border-slate-700">
+            <button type="button" onclick="closeProfileModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-semibold rounded-xl">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow">Save Profile</button>
+        </div>
+    </form>
+</div>
+
 <!-- ADD FIELD MODAL -->
 <div id="addFieldModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
     <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -383,7 +465,18 @@ const ctx = canvas.getContext('2d');
 
 document.addEventListener('DOMContentLoaded', () => {
     loadTemplate(currentTemplate);
+    <?php if ($profileMsg): ?>
+        openProfileModal();
+    <?php endif; ?>
 });
+
+function openProfileModal() {
+    document.getElementById('profileModal').classList.remove('hidden');
+}
+
+function closeProfileModal() {
+    document.getElementById('profileModal').classList.add('hidden');
+}
 
 function selectTemplate(tmpl) {
     currentTemplate = tmpl;
