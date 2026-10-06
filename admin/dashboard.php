@@ -288,7 +288,7 @@ $demoMode = get_setting('demo_mode', '0') === '1';
         </button>
     </div>
 
-    <!-- TAB 1: OVERVIEW STATS -->
+    <!-- TAB 1: OVERVIEW STATS & CARD DATA DASHBOARD -->
     <div id="tab-overview" class="tab-content space-y-6">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
@@ -306,6 +306,118 @@ $demoMode = get_setting('demo_mode', '0') === '1';
             <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
                 <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Blocked IPs</p>
                 <p class="text-3xl font-black text-rose-400 mt-1"><?= count($ipBlocks) ?></p>
+            </div>
+        </div>
+
+        <!-- RECENTLY GENERATED CARDS DASHBOARD (Matching image.png design) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-lg font-extrabold text-white flex items-center space-x-2">
+                        <span>Card Data Dashboard</span>
+                    </h2>
+                    <p class="text-xs text-slate-400">Manage and monitor recently created ID cards & business cards.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="../studio.php" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white rounded-xl shadow transition">
+                        + Add Card Data
+                    </a>
+                    <button onclick="exportCSVData()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 font-bold text-xs text-white rounded-xl shadow transition">
+                        📥 Export Card Data (CSV)
+                    </button>
+                    <button onclick="exportBatchPDF()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 font-bold text-xs text-white rounded-xl shadow transition">
+                        ⚡ Send / Batch PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- SEARCH & FILTER TOOLBAR -->
+            <div class="flex flex-col sm:flex-row gap-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                <div class="flex-1 flex space-x-2">
+                    <input type="text" id="overviewSearchInput" placeholder="Search by ID or Name..." onkeyup="filterOverviewCards()" class="w-full px-4 py-2 bg-slate-900 border border-slate-800 text-xs text-white rounded-xl focus:outline-none focus:border-blue-500">
+                    <button onclick="filterOverviewCards()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white rounded-xl">Search</button>
+                </div>
+                <div class="flex space-x-2">
+                    <select id="overviewTypeFilter" onchange="filterOverviewCards()" class="px-3 py-2 bg-slate-900 border border-slate-800 text-xs text-white rounded-xl focus:outline-none focus:border-blue-500">
+                        <option value="ALL">Select Filter: All Cards</option>
+                        <option value="ID Card">ID Cards</option>
+                        <option value="Business Card">Business Cards</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- CARD TABLE / CARDS CONTAINER -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3 rounded-l-xl">Card ID</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3 text-center">ID Photo</th>
+                            <th class="p-3">Card Details</th>
+                            <th class="p-3">Generated Date</th>
+                            <th class="p-3 text-center">Actions</th>
+                            <th class="p-3 text-right rounded-r-xl">Studio</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/80" id="overviewCardTableBody">
+                        <?php if (empty($cardHistory)): ?>
+                            <tr><td colspan="7" class="p-8 text-center italic text-slate-500">No cards generated yet. Launch the studio to create your first card!</td></tr>
+                        <?php else: foreach ($cardHistory as $card):
+                            $cardIdStr = 'CARD-' . str_pad($card['id'], 8, '0', STR_PAD_LEFT);
+                            $frontImg = $card['preview_front'] ?? '';
+                            $backImg = $card['preview_back'] ?? '';
+                            $cardholder = $card['cardholder_name'] ?: 'Cardholder';
+                            $cardType = $card['card_type'] ?? 'ID Card';
+                            $creator = $card['username'] ?: 'System Admin';
+                        ?>
+                            <tr class="overview-card-row hover:bg-slate-800/30 transition"
+                                data-id="<?= htmlspecialchars($cardIdStr) ?>"
+                                data-name="<?= htmlspecialchars(strtolower($cardholder)) ?>"
+                                data-type="<?= htmlspecialchars($cardType) ?>">
+                                <td class="p-3 font-mono font-bold text-white"><?= htmlspecialchars($cardIdStr) ?></td>
+                                <td class="p-3">
+                                    <span class="px-2.5 py-1 text-[10px] font-extrabold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                        Installed
+                                    </span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <div class="relative group inline-block cursor-pointer" onclick="openLightbox('<?= htmlspecialchars($frontImg) ?>', '<?= htmlspecialchars($backImg) ?>', '<?= htmlspecialchars($cardholder) ?>')">
+                                        <?php if (!empty($frontImg)): ?>
+                                            <img src="<?= htmlspecialchars($frontImg) ?>" class="w-14 h-14 object-cover rounded-xl border border-slate-700 shadow group-hover:opacity-80 transition">
+                                            <p class="text-[9px] text-blue-400 font-semibold mt-1 group-hover:underline">Click to Enlarge</p>
+                                        <?php else: ?>
+                                            <div class="w-14 h-14 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] text-slate-500">No Img</div>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td class="p-3">
+                                    <p class="font-bold text-white text-sm"><?= htmlspecialchars($cardholder) ?></p>
+                                    <p class="text-[11px] text-blue-400 font-semibold"><?= htmlspecialchars($cardType) ?> · <?= htmlspecialchars($card['template_title'] ?? '') ?></p>
+                                    <p class="text-[10px] text-slate-400">Created by: <?= htmlspecialchars($creator) ?></p>
+                                </td>
+                                <td class="p-3 font-mono text-slate-400">
+                                    <?= date('M d, Y', strtotime($card['created_at'])) ?><br>
+                                    <span class="text-[10px] text-slate-500"><?= date('h:i A', strtotime($card['created_at'])) ?></span>
+                                </td>
+                                <td class="p-3 text-center space-y-1">
+                                    <button onclick="downloadSingleCardPDF('<?= htmlspecialchars($frontImg) ?>', '<?= htmlspecialchars($backImg) ?>', '<?= htmlspecialchars($cardholder) ?>')" class="px-3 py-1 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-400 font-extrabold text-[10px] rounded-lg w-full transition">
+                                        PDF EXPORT
+                                    </button>
+                                    <button onclick="downloadSingleCardPNG('<?= htmlspecialchars($frontImg) ?>', '<?= htmlspecialchars($backImg) ?>', '<?= htmlspecialchars($cardholder) ?>')" class="px-3 py-1 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 font-extrabold text-[10px] rounded-lg w-full transition">
+                                        SEND / PNG
+                                    </button>
+                                </td>
+                                <td class="p-3 text-right">
+                                    <a href="../studio.php" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-blue-400 font-bold rounded-lg transition text-[11px]">
+                                        Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -616,6 +728,27 @@ $demoMode = get_setting('demo_mode', '0') === '1';
 
 </div>
 
+<!-- LIGHTBOX ENLARGE MODAL -->
+<div id="cardLightboxModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center z-50 p-4" onclick="closeLightbox(event)">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative" onclick="event.stopPropagation()">
+        <button onclick="closeLightbox(null)" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg font-bold">✕</button>
+        <h3 id="lightboxTitle" class="text-base font-extrabold text-white border-b border-slate-800 pb-2">Card Image Preview</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center justify-center pt-2">
+            <div class="space-y-1 text-center">
+                <p class="text-[11px] font-bold text-slate-400 uppercase">Front View</p>
+                <img id="lightboxFrontImg" src="" class="max-h-72 w-auto mx-auto object-contain rounded-xl border border-slate-700 shadow-lg">
+            </div>
+            <div class="space-y-1 text-center">
+                <p class="text-[11px] font-bold text-slate-400 uppercase">Back View</p>
+                <img id="lightboxBackImg" src="" class="max-h-72 w-auto mx-auto object-contain rounded-xl border border-slate-700 shadow-lg">
+            </div>
+        </div>
+        <div class="flex justify-end pt-3 border-t border-slate-800">
+            <button onclick="closeLightbox(null)" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- EDIT STAFF MODAL -->
 <div id="editStaffModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
     <form method="POST" class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -707,6 +840,100 @@ function exportBatchPDF() {
     });
 
     pdf.save(`System_Card_History_Batch_${Date.now()}.pdf`);
+}
+
+function filterOverviewCards() {
+    const query = document.getElementById('overviewSearchInput').value.toLowerCase().trim();
+    const filterType = document.getElementById('overviewTypeFilter').value;
+    const rows = document.querySelectorAll('.overview-card-row');
+
+    rows.forEach(row => {
+        const id = row.getAttribute('data-id').toLowerCase();
+        const name = row.getAttribute('data-name').toLowerCase();
+        const type = row.getAttribute('data-type');
+
+        const matchesSearch = id.includes(query) || name.includes(query);
+        const matchesFilter = (filterType === 'ALL') || (type === filterType);
+
+        if (matchesSearch && matchesFilter) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function openLightbox(frontUrl, backUrl, cardholder) {
+    document.getElementById('lightboxTitle').innerText = cardholder ? cardholder + ' - Card View' : 'Card View';
+    document.getElementById('lightboxFrontImg').src = frontUrl || '';
+    document.getElementById('lightboxBackImg').src = backUrl || '';
+    document.getElementById('cardLightboxModal').classList.remove('hidden');
+}
+
+function closeLightbox(e) {
+    if (!e || e.target.id === 'cardLightboxModal') {
+        document.getElementById('cardLightboxModal').classList.add('hidden');
+    }
+}
+
+function downloadSingleCardPDF(front, back, name) {
+    if (!front && !back) {
+        alert('No card images available for export.');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [600, 960] });
+
+    if (front && front.length > 50) {
+        pdf.addImage(front, 'PNG', 0, 0, 600, 960);
+    }
+
+    if (back && back.length > 50) {
+        if (front && front.length > 50) pdf.addPage([600, 960], 'portrait');
+        pdf.addImage(back, 'PNG', 0, 0, 600, 960);
+    }
+
+    const filename = (name || 'Card').replace(/[^a-zA-Z0-9_-]/g, '_') + '_Card.pdf';
+    pdf.save(filename);
+}
+
+function downloadSingleCardPNG(front, back, name) {
+    const url = front || back;
+    if (!url) {
+        alert('No card image available.');
+        return;
+    }
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (name || 'Card').replace(/[^a-zA-Z0-9_-]/g, '_') + '_Card.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function exportCSVData() {
+    const rows = document.querySelectorAll('.overview-card-row');
+    if (rows.length === 0) {
+        alert('No card data to export.');
+        return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,Card ID,Cardholder Name,Card Type,Status\n";
+
+    rows.forEach(row => {
+        const id = row.getAttribute('data-id');
+        const name = row.getAttribute('data-name');
+        const type = row.getAttribute('data-type');
+        csvContent += `"${id}","${name}","${type}","Active"\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Card_Data_Export_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 </script>
 
